@@ -59,22 +59,19 @@
         .col-yellow { border-color: rgba(241, 196, 15, 0.4); }
         .col-white { border-color: rgba(236, 240, 241, 0.3); }
 
-        .column-header { min-height: 65px; margin-bottom: 2px; position: relative; z-index: 20; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 4px; }
-        .column h4 { margin: 0; font-size: 12px; color: #fff; font-weight: bold; }
-        
-        .history-badge { 
-            display: inline-block; font-size: 13px; color: #f1c40f; background: rgba(0,0,0,0.7); 
-            padding: 4px 10px; border-radius: 6px; margin-top: 6px; font-weight: bold; 
-            border: 1px solid rgba(241,196,15,0.3); text-shadow: 0 1px 3px rgba(0,0,0,0.8);
-        }
+        /* 📐 명칭 강조 및 내역 축소 최종 튜닝 */
+        .column-header { min-height: 60px; margin-bottom: 2px; position: relative; z-index: 20; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 4px; }
+        .column h4 { margin: 0; font-size: 16px; color: #f1c40f; font-weight: 900; text-shadow: 0 2px 5px rgba(0,0,0,0.8); }
+        .history-badge { display: inline-block; font-size: 13px; color: #fff; background: rgba(0,0,0,0.7); padding: 3px 8px; border-radius: 5px; margin-top: 5px; font-weight: bold; border: 1px solid rgba(255,255,255,0.1); }
         
         .stacked-container { position: relative; width: 100%; flex: 1; display: flex; flex-direction: column; align-items: center; padding-top: 8px; z-index: 15; min-height: 0; }
         
         .card-list { display: flex; gap: 6px; justify-content: center; flex-wrap: wrap; min-height: 80px; align-items: center; position: relative; }
 
+        /* 🎨 카드 해상도 최고 품질 유지 최적화 */
         .card { 
             width: 58px; height: 90px; border-radius: 6px; display: flex; flex-direction: column; justify-content: space-between; align-items: center; font-weight: bold; font-size: 15px; cursor: pointer; border: 1.5px solid #000; box-shadow: 0 4px 8px rgba(0,0,0,0.8), inset 0 0 5px rgba(255,255,255,0.3); background-size: cover; background-position: center; background-repeat: no-repeat; 
-            image-rendering: high-quality; /* 최고 해상도 품질 유지 보장 */
+            image-rendering: -webkit-optimize-contrast; image-rendering: high-quality;
             text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000; 
             transition: transform 0.2s ease, box-shadow 0.2s ease;
         }
@@ -239,10 +236,10 @@
             white:  { name: "⚪ 설산 빙벽" }
         };
 
+        // 🚨 최종 반영: 언더바(_) 제거하고 띄어쓰기로 변경하여 실제 파일명과 매칭
         function getCustomCardImage(color, label) {
             let fileLabel = label.toLowerCase(); 
-            // 🚨 띄어쓰기를 언더바(_)로 치환 (경로 깨짐 완벽 방지)
-            return `images/${color}_${fileLabel}.png`; 
+            return `images/${color} ${fileLabel}.png`; 
         }
 
         let myRole = null;
@@ -250,7 +247,6 @@
         let selectedHandIndex = null;
         let isAnimating = false;
         
-        // 초기에는 알림 꺼짐 상태로 시작
         let isNotifEnabled = false; 
         let previousTurnTracker = null;
 
@@ -378,7 +374,6 @@
             const newHand = newState[`${oppRole}_hand`] || [];
             
             if (newHand.length > oldHand.length) {
-                // 방어 코드 추가: deck이 undefined일 수 있으므로 length 확인
                 const oldDeckLen = oldState.deck ? oldState.deck.length : 0;
                 const newDeckLen = newState.deck ? newState.deck.length : 0;
 
@@ -581,7 +576,6 @@
             const handDiv = document.getElementById('my-hand'); handDiv.innerHTML = '';
             myHand.forEach((card, index) => { handDiv.appendChild(createCardElement(card, index, isMyTurn && roomData.step === 'PLAY', "my-card")); });
 
-            // 내 탐험지 렌더링
             colors.forEach(color => {
                 const myFieldContainer = document.getElementById(`container-my-${color}`); 
                 myFieldContainer.innerHTML = '';
@@ -601,7 +595,6 @@
                 document.getElementById(`hist-my-${color}`).innerText = historyText;
             });
 
-            // 상대방 탐험지 렌더링
             const oppRole = myRole === 'p1' ? 'p2' : 'p1';
             colors.forEach(color => {
                 const oppFieldContainer = document.getElementById(`container-opp-${color}`); 
@@ -622,7 +615,6 @@
                 document.getElementById(`hist-opp-${color}`).innerText = historyText;
             });
 
-            // 버림판 렌더링
             colors.forEach(color => {
                 const specificContainer = document.getElementById(`box-disc-${color}`);
                 specificContainer.innerHTML = '';
@@ -654,7 +646,6 @@
             if (selectedHandIndex === null || isAnimating) return;
             const cardObj = roomData[`${myRole}_hand`][selectedHandIndex];
             
-            // 🎯 로스트시티 룰 적용 (오름차순, 투자 카드 선행 검증)
             if (actionType === 'PLAY') {
                 const colorField = roomData[`${myRole}_field`][cardObj.color].filter(c => c !== 0);
                 if (colorField.length > 0) {
@@ -774,7 +765,6 @@
             roomData.step = 'DRAW'; roomData.lastDiscardedColor = card.color; selectedHandIndex = null; roomRef.set(roomData);
         }
 
-        // 🚨 수정 포인트: deck이 빈 배열일 경우 방어 처리
         function drawFromDeck() {
             if (!roomData.deck || roomData.deck.length === 0) return; 
 
@@ -787,7 +777,6 @@
         }
 
         function drawFromDiscard(color) {
-            // 🎯 룰 적용: 방금 버린 카드를 즉시 가져올 수 없음
             if (color === roomData.lastDiscardedColor) { alert("⛔ 방금 본인이 버린 카드는 즉시 가져올 수 없습니다!"); return; }
             if (!roomData.discardPiles[color] || roomData.discardPiles[color].length === 0) return;
 
@@ -795,7 +784,6 @@
             roomData.turn = myRole === 'p1' ? 'p2' : 'p1'; roomData.step = 'PLAY'; roomRef.set(roomData);
         }
 
-        // 🚨 수정 포인트: AI 배열 및 덱 검증 방어 처리 추가
         function runAIIntelligence() {
             if(roomData.turn !== 'p2' || roomData.gameState !== 'PLAYING') return;
             const aiHand = roomData.p2_hand || [];
@@ -852,7 +840,6 @@
                     if(pile.length > 0) {
                         const topCard = pile[pile.length - 1];
                         const myField = roomData.p2_field[color].filter(c => c !== 0);
-                        // AI도 방금 자기가 버린 카드는 주워오면 안 됨
                         if(myField.length > 0 && topCard.value >= 7 && color !== roomData.lastDiscardedColor) {
                             const lastMyCard = myField[myField.length - 1];
                             if(topCard.value >= lastMyCard.value) {
@@ -876,7 +863,6 @@
             }
         }
 
-        // 🎯 룰 적용: 점수 계산식 완벽 구현 (카드 합계 - 20) * 배수 + (8장 이상 보너스 20)
         function calcLineScore(fieldArray) {
             const fCards = (fieldArray || []).filter(c => c !== 0); if (fCards.length === 0) return 0;
             let sum = 0; let mult = 1;
