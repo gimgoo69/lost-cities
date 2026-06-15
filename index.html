@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>로스트시티 익스트림 디럭스 (스택 오버레이 엔진)</title>
+    <title>로스트시티 익스트림 디럭스 (완전판)</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
     <style>
@@ -42,7 +42,6 @@
 
         .main-container { flex: 1; display: flex; max-width: 1550px; width: 100%; margin: 0 auto; gap: 15px; min-height: 0; }
         
-        /* 🚨 오버플로우 제한 해제: 카드가 밖으로 펼쳐질 수 있게 허용 */
         .game-table { flex: 3; display: flex; flex-direction: column; gap: 8px; position: relative; transition: opacity 0.3s ease; }
         .game-table.waiting { opacity: 0.5; pointer-events: none; }
         
@@ -50,12 +49,11 @@
         .section h3 { margin: 0 0 8px 0; font-size: 14px; color: #f1c40f; text-align: left; padding-left: 5px; }
         .grid-5 { display: flex; justify-content: space-between; gap: 8px; flex: 1; min-height: 0; }
         
-        /* 🚨 컬럼 z-index 적용: 호버 시 다른 섹션들을 덮도록 최상단 배치 */
         .column { 
              flex: 1; min-height: 0; background: rgba(15, 20, 25, 0.8); border: 2px solid; border-radius: 10px; padding: 6px 4px; position: relative; display: flex; flex-direction: column; box-shadow: inset 0 0 15px rgba(0,0,0,0.5);
              z-index: 1;
         }
-        .column:hover { z-index: 100; } /* 마우스를 올린 기둥이 무조건 맨 위로 옴 */
+        .column:hover { z-index: 100; }
         
         .col-red { border-color: rgba(231, 76, 60, 0.4); }
         .col-blue { border-color: rgba(52, 152, 219, 0.4); }
@@ -67,24 +65,21 @@
         .column h4 { margin: 0; font-size: 16px; color: #f1c40f; font-weight: 900; text-shadow: 0 2px 5px rgba(0,0,0,0.8); }
         .history-badge { display: inline-block; font-size: 13px; color: #fff; background: rgba(0,0,0,0.7); padding: 3px 8px; border-radius: 5px; margin-top: 5px; font-weight: bold; border: 1px solid rgba(255,255,255,0.1); }
         
-        /* 🔥 신규 스택 엔진 컨테이너 */
         .stacked-container { 
-            position: relative; width: 100%; flex: 1; min-height: 105px; /* 공간 차지 안 함 */
+            position: relative; width: 100%; flex: 1; min-height: 105px; 
             display: flex; justify-content: center; z-index: 15;
         }
         
-        /* 🔥 신규 스택 카드: 공중부양 (absolute) + 자바스크립트의 --card-idx와 결합 */
         .stacked-card { 
             position: absolute; 
-            left: 50%; margin-left: -29px; /* 중앙 정렬 */
-            top: calc(var(--card-idx) * 4px); /* 평소엔 4px 초밀착 압축! */
+            left: 50%; margin-left: -29px; 
+            top: calc(var(--card-idx) * 4px); 
             transition: top 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275), transform 0.2s ease, box-shadow 0.2s ease;
             z-index: var(--card-idx); 
         }
 
-        /* ✨ 마우스를 올렸을 때 촤르륵 펼쳐지는 마법의 코드 */
         .stacked-container:hover .stacked-card {
-            top: calc(var(--card-idx) * 25px); /* 25px 간격으로 길게 전개됨! */
+            top: calc(var(--card-idx) * 25px); 
             box-shadow: 0 8px 16px rgba(0,0,0,0.9);
         }
 
@@ -100,9 +95,7 @@
         .card .card-num { margin: 4px 0 0 0; font-size: 18px; font-weight: 900; }
         .card .card-bg-label { margin: 0 0 4px 0; font-size: 9px; background: rgba(0,0,0,0.7); padding: 2px 4px; border-radius: 3px; }
         
-        /* 개별 카드 호버 이펙트 (펼쳐진 상태에서 카드 한장 선택시 살짝 뜸) */
         .card:hover { transform: translateY(-10px) scale(1.08); box-shadow: 0 10px 20px rgba(0,0,0,1); z-index: 999 !important; }
-        
         .card.selected { border: 3px solid #f1c40f !important; transform: translateY(-15px) scale(1.12) !important; box-shadow: 0 15px 30px rgba(241, 196, 15, 0.5); z-index: 999 !important; }
         
         .card.flying-effect {
@@ -264,7 +257,6 @@
         let roomData = null;
         let selectedHandIndex = null;
         let isAnimating = false;
-        
         let isNotifEnabled = false; 
         let previousTurnTracker = null;
 
@@ -313,9 +305,14 @@
             if (currentData === null || currentData.gameState === 'RESETTING') {
                 setupNewGameInit();
             } else {
-                myRole = 'p2';
-                roomRef.child('p2_online').set(true);
-                roomRef.child('gameState').set('PLAYING');
+                if (currentData.isAIMode) {
+                    myRole = 'p1';
+                    roomRef.child('p1_online').set(true);
+                } else {
+                    myRole = 'p2';
+                    roomRef.child('p2_online').set(true);
+                    roomRef.child('gameState').set('PLAYING');
+                }
             }
 
             document.getElementById('player-role').innerText = `당신은 [Player ${myRole === 'p1' ? '1 (방장)' : '2 (참가자)'}] 입니다.`;
@@ -326,11 +323,9 @@
             roomRef.on('value', (snap) => {
                 const incomingData = snap.val();
                 if (!incomingData) return;
-                
                 if (incomingData.gameState === 'RESETTING') { location.reload(); return; }
 
                 let motionTriggered = false;
-
                 if (roomData && incomingData && !isAnimating) {
                     const oppRole = myRole === 'p1' ? 'p2' : 'p1';
                     if (roomData.turn === oppRole && roomData.step === 'PLAY' && incomingData.step === 'DRAW') {
@@ -340,7 +335,6 @@
                         motionTriggered = triggerOpponentDrawMotion(roomData, incomingData, oppRole);
                     }
                 }
-
                 roomData = incomingData;
                 
                 if (!isAnimating && !motionTriggered) {
@@ -408,25 +402,20 @@
         function executeOpponentVirtualAnimation(cardObj, endId) {
             const endEl = document.getElementById(endId);
             if (!endEl) return;
-
             isAnimating = true;
             const clone = document.createElement('div');
             clone.className = `card ${cardObj.color} flying-effect`;
             clone.style.backgroundImage = `url('${cardObj.img}')`;
-            
             clone.style.left = `${window.innerWidth / 2 - 29}px`;
             clone.style.top = `-100px`;
             document.body.appendChild(clone);
-
             const endRect = endEl.getBoundingClientRect();
-
             setTimeout(() => {
                 clone.style.left = `${endRect.left + (endRect.width/2) - 29}px`;
                 clone.style.top = `${endRect.top + 20}px`;
                 clone.style.transform = 'scale(0.9) rotate(-10deg)';
                 clone.style.opacity = '0.5';
             }, 20);
-
             setTimeout(() => {
                 clone.remove();
                 isAnimating = false;
@@ -438,25 +427,21 @@
         function executeOpponentDrawAnimation(startId) {
             const startEl = document.getElementById(startId);
             if (!startEl) return;
-
             isAnimating = true;
             const clone = document.createElement('div');
             clone.className = `card flying-effect`;
             clone.style.background = '#2c3e50';
             clone.style.border = '2px solid #bdc3c7';
-            
             const startRect = startEl.getBoundingClientRect();
             clone.style.left = `${startRect.left + (startRect.width/2) - 29}px`;
             clone.style.top = `${startRect.top}px`;
             document.body.appendChild(clone);
-
             setTimeout(() => {
                 clone.style.left = `${window.innerWidth / 2 - 29}px`;
                 clone.style.top = `-100px`;
                 clone.style.transform = 'scale(0.8) rotate(180deg)';
                 clone.style.opacity = '0.0';
             }, 20);
-
             setTimeout(() => {
                 clone.remove();
                 isAnimating = false;
@@ -483,6 +468,11 @@
             }
             roomRef.set(newRoom);
             document.getElementById('ai-start-btn').style.display = 'inline-block';
+
+            setTimeout(() => {
+                const firstPlayerName = randomFirstTurn === 'p1' ? '당신(방장)' : '상대방(참가자/AI)';
+                chatRef.push({ sender: 'system', text: `🪙 동전 던지기 결과: [${firstPlayerName}] 선공입니다!` });
+            }, 800);
         }
 
         function executeServerReset() {
@@ -587,7 +577,6 @@
             const handDiv = document.getElementById('my-hand'); handDiv.innerHTML = '';
             myHand.forEach((card, index) => { handDiv.appendChild(createCardElement(card, index, isMyTurn && roomData.step === 'PLAY', "my-card")); });
 
-            // 🚨 핵심 로직: 카드에 인덱스 번호표(--card-idx) 부여해서 JS-CSS 연동
             colors.forEach(color => {
                 const myFieldContainer = document.getElementById(`container-my-${color}`); 
                 myFieldContainer.innerHTML = '';
@@ -598,7 +587,7 @@
                     if(card !== 0) { 
                         const cardEl = createCardElement(card, null, false);
                         cardEl.className += ' stacked-card';
-                        cardEl.style.setProperty('--card-idx', historyLabels.length); // ⬅️ 번호표 부여!
+                        cardEl.style.setProperty('--card-idx', historyLabels.length);
                         myFieldContainer.appendChild(cardEl);
                         historyLabels.push(card.label);
                     } 
@@ -619,7 +608,7 @@
                     if(card !== 0) { 
                         const cardEl = createCardElement(card, null, false);
                         cardEl.className += ' stacked-card';
-                        cardEl.style.setProperty('--card-idx', historyLabels.length); // ⬅️ 번호표 부여!
+                        cardEl.style.setProperty('--card-idx', historyLabels.length);
                         oppFieldContainer.appendChild(cardEl);
                         historyLabels.push(card.label);
                     } 
@@ -639,7 +628,7 @@
                 realCards.forEach((cardObj, index) => {
                     const cardEl = createCardElement(cardObj, null, false);
                     cardEl.className += ' stacked-card';
-                    cardEl.style.setProperty('--card-idx', index); // ⬅️ 번호표 부여!
+                    cardEl.style.setProperty('--card-idx', index);
                     
                     if (index === realCards.length - 1) {
                         cardEl.id = `discard-top-${color}`;
@@ -680,12 +669,10 @@
             const clone = document.createElement('div');
             clone.className = `card ${cardObj.color} flying-effect`;
             clone.style.backgroundImage = `url('${cardObj.img}')`;
-            
             const rect = originCardEl.getBoundingClientRect();
             clone.style.left = `${rect.left}px`;
             clone.style.top = `${rect.top}px`;
             document.body.appendChild(clone);
-            
             originCardEl.style.opacity = '0';
 
             let destinationId = actionType === 'PLAY' ? `container-my-${cardObj.color}` : `box-disc-${cardObj.color}`;
@@ -710,26 +697,21 @@
             if(isAnimating) return;
             const targetTopCard = document.getElementById(`discard-top-${color}`);
             if(!targetTopCard) { drawFromDiscard(color); return; }
-
             isAnimating = true;
             const clone = document.createElement('div');
             clone.className = `card ${color} flying-effect`;
             clone.style.backgroundImage = targetTopCard.style.backgroundImage;
-            
             const rect = targetTopCard.getBoundingClientRect();
             clone.style.left = `${rect.left}px`;
             clone.style.top = `${rect.top}px`;
             document.body.appendChild(clone);
-
             const handArea = document.getElementById('my-hand');
             const handRect = handArea.getBoundingClientRect();
-
             setTimeout(() => {
                 clone.style.left = `${handRect.left + (handRect.width/2) - 29}px`;
                 clone.style.top = `${handRect.top + 10}px`;
                 clone.style.transform = 'scale(1.1) rotate(-5deg)';
             }, 20);
-
             setTimeout(() => {
                 clone.remove();
                 isAnimating = false;
@@ -740,27 +722,22 @@
         function animateDeckDraw() {
             if(isAnimating || document.getElementById('deck-draw-btn').disabled) return;
             const deckBtn = document.getElementById('deck-draw-btn');
-            
             isAnimating = true;
             const clone = document.createElement('div');
             clone.className = 'card flying-effect';
             clone.style.background = '#2c3e50';
             clone.style.border = '2px solid #f1c40f';
-            
             const btnRect = deckBtn.getBoundingClientRect();
             clone.style.left = `${btnRect.left + (btnRect.width/2) - 29}px`;
             clone.style.top = `${btnRect.top}px`;
             document.body.appendChild(clone);
-
             const handArea = document.getElementById('my-hand');
             const handRect = handArea.getBoundingClientRect();
-
             setTimeout(() => {
                 clone.style.left = `${handRect.left + (handRect.width/2) - 29}px`;
                 clone.style.top = `${handRect.top + 10}px`;
                 clone.style.transform = 'scale(1) rotate(0deg)';
             }, 20);
-
             setTimeout(() => {
                 clone.remove();
                 isAnimating = false;
@@ -782,19 +759,15 @@
 
         function drawFromDeck() {
             if (!roomData.deck || roomData.deck.length === 0) return; 
-
             const myHand = roomData[`${myRole}_hand`] || []; myHand.push(roomData.deck.pop());
-            
             if (!roomData.deck || roomData.deck.length === 0) { roomData.gameState = 'GAME_OVER'; } 
             else { roomData.turn = myRole === 'p1' ? 'p2' : 'p1'; roomData.step = 'PLAY'; }
-            
             roomRef.set(roomData);
         }
 
         function drawFromDiscard(color) {
             if (color === roomData.lastDiscardedColor) { alert("⛔ 방금 본인이 버린 카드는 즉시 가져올 수 없습니다!"); return; }
             if (!roomData.discardPiles[color] || roomData.discardPiles[color].length === 0) return;
-
             const myHand = roomData[`${myRole}_hand`] || []; myHand.push(roomData.discardPiles[color].pop());
             roomData.turn = myRole === 'p1' ? 'p2' : 'p1'; roomData.step = 'PLAY'; roomRef.set(roomData);
         }
@@ -864,16 +837,13 @@
                         }
                     }
                 }
-                
                 if(!grabbedFromDiscard) { 
                     if (roomData.deck && roomData.deck.length > 0) {
                         roomData.p2_hand.push(roomData.deck.pop()); 
                     }
                 }
-
                 if (!roomData.deck || roomData.deck.length === 0) { roomData.gameState = 'GAME_OVER'; } 
                 else { roomData.turn = 'p1'; roomData.step = 'PLAY'; }
-                
                 roomRef.set(roomData);
             }
         }
