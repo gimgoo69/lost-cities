@@ -3,11 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>로스트시티 익스트림 디럭스 (최종 완성판 V5)</title>
+    <title>로스트시티 익스트림 디럭스 (최종 완성판 V6)</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
     <style>
-        /* 🚨 1. 해상도 자동 스케일링을 위한 배경 세팅 */
+        /* 🎨 풀스크린 고정 및 스케일링 배경 */
         body { 
             margin: 0; padding: 0; background: #0d1217; 
             display: flex; justify-content: center; align-items: center; 
@@ -15,7 +15,6 @@
             user-select: none;
         }
 
-        /* 🚨 2. 도화지 높이를 950px로 넉넉하게 늘려 손패 잘림 완벽 방지! */
         #game-wrapper {
             width: 1400px; height: 950px; 
             background: linear-gradient(135deg, #18232e 0%, #0d1217 100%); 
@@ -70,7 +69,6 @@
         .col-yellow { border-color: rgba(241, 196, 15, 0.4); }
         .col-white { border-color: rgba(236, 240, 241, 0.3); }
 
-        /* 🚨 호버 취소 방지: 내역칸(헤더)에 pointer-events: none 을 주어 마우스가 투과되게 만듦 */
         .column-header { 
             pointer-events: none; 
             min-height: 60px; margin-bottom: 2px; position: relative; z-index: 10; 
@@ -79,48 +77,40 @@
         .column h4 { margin: 0; font-size: 16px; color: #f1c40f; font-weight: 900; text-shadow: 0 2px 5px rgba(0,0,0,0.8); }
         .history-badge { display: inline-block; font-size: 13px; color: #fff; background: rgba(0,0,0,0.7); padding: 3px 8px; border-radius: 5px; margin-top: 5px; font-weight: bold; border: 1px solid rgba(255,255,255,0.1); }
         
-        /* 🚨 스택 컨테이너를 헤더보다 위(z-index: 20)로 끌어올림 */
         .stacked-container { 
             position: relative; width: 100%; flex: 1; min-height: 105px; 
             display: flex; justify-content: center; z-index: 20;
         }
         
+        /* 🚨 1. 평소 상태 튜닝: 오프셋을 없애고 0px부터 오밀조밀하게 시작하여 정중앙 배치 */
         .stacked-card { 
             position: absolute; 
             left: 50%; margin-left: -29px; 
-            top: calc(15px + var(--card-idx) * 4px); /* 위쪽 마진 15px를 확보하여 내역칸 침범 최소화 */
+            top: calc(var(--card-idx) * 4px); 
             transition: top 0.3s ease, transform 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.2s ease;
             z-index: var(--card-idx); 
         }
 
-        /* 마우스를 올린 기둥의 전체 카드들이 부채꼴처럼 펼쳐짐 */
+        /* 🚨 호버 상태 튜닝: 마우스를 대면 내역칸 침범을 막기 위해 15px 내려앉으며 부채꼴 확장 */
         .stacked-container:hover .stacked-card {
             top: calc(15px + var(--card-idx) * 26px); 
             box-shadow: 0 8px 16px rgba(0,0,0,0.6);
         }
 
-        /* 🚨 3. 하스스톤급 '모세의 기적 + 폭포수 Z-index' 호버 엔진! */
-        
-        /* 1) 마우스를 올린 '특정 카드'는 제자리에서 크게 팝업! */
+        /* 2. 하스스톤급 '모세의 기적 + 폭포수 Z-index' 호버 구조 */
         .stacked-container .stacked-card:hover {
             transform: translateY(-10px) scale(1.25) !important;
             box-shadow: 0 20px 40px rgba(0,0,0,1) !important;
             z-index: 1000 !important;
         }
-
-        /* 2) 특정 카드가 선택되었을 때, 그 카드보다 '위에 있는(이전)' 카드들은 위쪽으로 피함! */
         .stacked-container:has(.stacked-card:hover) .stacked-card:not(:hover):has(~ .stacked-card:hover) {
             transform: translateY(-35px) !important;
         }
-
-        /* 3) 특정 카드가 선택되었을 때, '아래에 있는' 카드들은 아래로 피하면서 Z-INDEX 역순 재편! */
         .stacked-container .stacked-card:hover ~ .stacked-card {
             transform: translateY(35px) !important;
-            z-index: calc(500 - var(--card-idx)) !important; /* 🔥 마우스가 부드럽게 타고 내려가도록 아랫카드 Z-index를 깎음 */
+            z-index: calc(500 - var(--card-idx)) !important; 
         }
 
-
-        /* 🚨 손패 여백 추가로 잘림 방지 */
         .card-list { display: flex; gap: 6px; justify-content: center; flex-wrap: wrap; min-height: 100px; padding-bottom: 10px; align-items: center; position: relative; }
 
         .card { 
@@ -194,7 +184,7 @@
 
     <div id="turn-toast" class="toast-notification">🔔 당신의 턴입니다!</div>
 
-    <h1>🌐 로스트시티 익스트림 디럭스 (최종 완성판 V5)</h1>
+    <h1>🌐 로스트시티 익스트림 디럭스 (최종 완성판 V6)</h1>
     
     <div class="info-panel">
         <div id="player-role">접속 중...</div>
@@ -696,12 +686,15 @@
                     
                     if (index === realCards.length - 1) {
                         cardEl.id = `discard-top-${color}`;
-                        if(isMyTurn && roomData.step === 'DRAW') {
-                            cardEl.onclick = () => animateDiscardDraw(color);
-                        }
+                    }
+                    
+                    // 🚨 2. 클릭 상호작용 개편: 어떤 카드를 클릭해도 상단(가장 최근) 카드를 즉시 뽑아가도록 히트박스 전체 통합
+                    if(isMyTurn && roomData.step === 'DRAW') {
+                        cardEl.onclick = () => animateDiscardDraw(color);
+                        cardEl.style.cursor = 'pointer';
                     } else {
                         cardEl.onclick = null;
-                        cardEl.style.cursor = 'help'; 
+                        cardEl.style.cursor = (index === realCards.length - 1) ? 'default' : 'help';
                     }
                     specificContainer.appendChild(cardEl);
                 });
