@@ -1,0 +1,913 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>로스트시티 익스트림 디럭스 (최종 완전판)</title>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    <style>
+        /* 🎨 풀스크린 스크롤 방지 및 해상도 최적화 */
+        body { 
+            font-family: 'Malgun Gothic', sans-serif; text-align: center; 
+            background: linear-gradient(135deg, #18232e 0%, #0d1217 100%); 
+            color: #fff; margin: 0; padding: 10px 20px; 
+            height: 100vh; height: 100dvh; 
+            box-sizing: border-box; overflow: hidden; 
+            display: flex; flex-direction: column; user-select: none;
+        }
+        
+        h1 { font-size: 24px; color: #f1c40f; text-shadow: 0 2px 10px rgba(241, 196, 15, 0.4); margin: 0 0 5px 0; }
+
+        .score-board { 
+            font-size: 20px; font-weight: bold; background: rgba(30, 40, 50, 0.9); color: #f1c40f; 
+            display: inline-block; padding: 6px 30px; border-radius: 30px; 
+            box-shadow: 0 4px 10px rgba(0,0,0,0.6); margin-bottom: 8px; border: 1px solid rgba(255,255,255,0.1); 
+        }
+
+        .info-panel { 
+            background: rgba(20, 30, 40, 0.8); color: #ecf0f1; padding: 8px 15px; border-radius: 10px; 
+            margin: 0 auto 10px auto; font-weight: bold; border: 1px solid rgba(255,255,255,0.05); 
+            display: flex; justify-content: center; align-items: center; gap: 15px; flex-wrap: wrap;
+        }
+
+        .toast-notification {
+            position: fixed; top: 30%; left: 50%; transform: translate(-50%, -50%);
+            background: linear-gradient(135deg, #2ecc71 0%, #27ae60 100%);
+            color: white; padding: 15px 40px; border-radius: 30px; font-size: 22px; font-weight: 900;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.8), 0 0 20px rgba(46,204,113,0.5);
+            z-index: 9999999; display: none; opacity: 0; border: 2px solid #fff;
+            transition: opacity 0.3s ease, transform 0.3s ease; pointer-events: none;
+        }
+
+        .main-container { flex: 1; display: flex; max-width: 1550px; width: 100%; margin: 0 auto; gap: 15px; min-height: 0; }
+        
+        .game-table { flex: 3; display: flex; flex-direction: column; gap: 8px; position: relative; transition: opacity 0.3s ease; overflow: hidden; }
+        .game-table.waiting { opacity: 0.5; pointer-events: none; }
+        
+        .section { background: rgba(30, 40, 50, 0.5); padding: 8px 12px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.05); display: flex; flex-direction: column; }
+        .section h3 { margin: 0 0 8px 0; font-size: 14px; color: #f1c40f; text-align: left; padding-left: 5px; }
+        .grid-5 { display: flex; justify-content: space-between; gap: 8px; flex: 1; min-height: 0; }
+        
+        .column { 
+             flex: 1; min-height: 0; background: rgba(15, 20, 25, 0.8); border: 2px solid; border-radius: 10px; padding: 6px 4px; position: relative; display: flex; flex-direction: column; box-shadow: inset 0 0 15px rgba(0,0,0,0.5);
+        }
+        
+        .col-red { border-color: rgba(231, 76, 60, 0.4); }
+        .col-blue { border-color: rgba(52, 152, 219, 0.4); }
+        .col-green { border-color: rgba(46, 204, 113, 0.4); }
+        .col-yellow { border-color: rgba(241, 196, 15, 0.4); }
+        .col-white { border-color: rgba(236, 240, 241, 0.3); }
+
+        .column-header { min-height: 65px; margin-bottom: 2px; position: relative; z-index: 20; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 4px; }
+        .column h4 { margin: 0; font-size: 12px; color: #fff; font-weight: bold; }
+        
+        .history-badge { 
+            display: inline-block; font-size: 13px; color: #f1c40f; background: rgba(0,0,0,0.7); 
+            padding: 4px 10px; border-radius: 6px; margin-top: 6px; font-weight: bold; 
+            border: 1px solid rgba(241,196,15,0.3); text-shadow: 0 1px 3px rgba(0,0,0,0.8);
+        }
+        
+        .stacked-container { position: relative; width: 100%; flex: 1; display: flex; flex-direction: column; align-items: center; padding-top: 8px; z-index: 15; min-height: 0; }
+        
+        .card-list { display: flex; gap: 6px; justify-content: center; flex-wrap: wrap; min-height: 80px; align-items: center; position: relative; }
+
+        .card { 
+            width: 58px; height: 90px; border-radius: 6px; display: flex; flex-direction: column; justify-content: space-between; align-items: center; font-weight: bold; font-size: 15px; cursor: pointer; border: 1.5px solid #000; box-shadow: 0 4px 8px rgba(0,0,0,0.8), inset 0 0 5px rgba(255,255,255,0.3); background-size: cover; background-position: center; background-repeat: no-repeat; 
+            image-rendering: high-quality; /* 최고 해상도 품질 유지 보장 */
+            text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000; 
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        
+        .stacked-card { position: relative; margin-top: -76px; }
+        .stacked-card:first-child { margin-top: 0; }
+        .stacked-card:hover { transform: translateY(-25px) scale(1.15); box-shadow: 0 15px 25px rgba(0,0,0,1); z-index: 100; }
+        
+        .card .card-num { margin: 4px 0 0 0; font-size: 18px; font-weight: 900; }
+        .card .card-bg-label { margin: 0 0 4px 0; font-size: 9px; background: rgba(0,0,0,0.7); padding: 2px 4px; border-radius: 3px; }
+        
+        .card:hover { transform: translateY(-10px) scale(1.08); box-shadow: 0 10px 20px rgba(0,0,0,1); z-index: 99; }
+        .card.selected { border: 3px solid #f1c40f !important; transform: translateY(-15px) scale(1.12) !important; box-shadow: 0 15px 30px rgba(241, 196, 15, 0.5); z-index: 999 !important; }
+        
+        .card.flying-effect {
+            position: fixed !important; z-index: 99999 !important; pointer-events: none !important; 
+            box-shadow: 0 20px 40px rgba(0,0,0,0.8) !important; 
+            transition: left 0.35s cubic-bezier(0.2, 0.8, 0.2, 1), top 0.35s cubic-bezier(0.2, 0.8, 0.2, 1), transform 0.35s ease, opacity 0.35s ease !important;
+        }
+        
+        .card.red { color: #ff9999; border-color: #c0392b; }
+        .card.blue { color: #99ccff; border-color: #2980b9; }
+        .card.green { color: #99ff99; border-color: #27ae60; }
+        .card.yellow { color: #ffee99; border-color: #f39c12; }
+        .card.white { color: #ffffff; border-color: #bdc3c7; }
+
+        .chat-container { flex: 1; max-width: 350px; background: rgba(30, 40, 50, 0.6); border-radius: 12px; box-shadow: 0 8px 20px rgba(0,0,0,0.5); padding: 12px; display: flex; flex-direction: column; height: 100%; box-sizing: border-box; border: 1px solid rgba(255,255,255,0.05); }
+        .chat-messages { flex: 1; overflow-y: auto; border: 1px solid rgba(0,0,0,0.3); border-radius: 8px; padding: 10px; text-align: left; background: rgba(15, 20, 25, 0.8); font-size: 13px; margin-bottom: 8px; display: flex; flex-direction: column; gap: 6px; }
+        .chat-input-area { display: flex; gap: 6px; }
+        .chat-input { flex: 1; padding: 8px; border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; font-size: 13px; background: rgba(0,0,0,0.5); color: white; outline: none; }
+        .chat-btn { background: #f1c40f; color: #101518; border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer; font-weight: bold; }
+        
+        .msg-item { padding: 6px 10px; border-radius: 8px; max-width: 85%; word-break: break-all; color: #fff; }
+        .msg-p1 { background: #16a085; align-self: flex-start; border-bottom-left-radius: 2px; }
+        .msg-p2 { background: #d35400; align-self: flex-start; border-bottom-left-radius: 2px; }
+        .msg-system { background: rgba(255,255,255,0.05); color: #95a5a6; font-size: 11px; text-align: center; align-self: center; border-radius: 10px; }
+
+        .deck-btn { background: #27ae60; color: white; border: none; padding: 8px 20px; font-size: 14px; border-radius: 6px; cursor: pointer; font-weight: bold; box-shadow: 0 4px 10px rgba(0,0,0,0.3); transition: 0.2s; }
+        .deck-btn:disabled { background: #4b5563; color: #9ca3af; box-shadow: none; cursor: not-allowed; }
+        
+        .notif-toggle-btn { background: #2ecc71; color: white; border: none; padding: 6px 12px; font-size: 12px; border-radius: 6px; cursor: pointer; font-weight: bold; transition: 0.2s; box-shadow: inset 0 0 5px rgba(0,0,0,0.2); }
+        .ai-mode-btn { background: #e74c3c; color: white; border: none; padding: 6px 12px; font-size: 12px; border-radius: 6px; cursor: pointer; font-weight: bold; }
+
+        .action-panel { margin: 5px 0; display: none; gap: 15px; justify-content: center; }
+        .btn { padding: 10px 25px; font-size: 14px; font-weight: bold; border-radius: 8px; cursor: pointer; border: none; color: white; transition: 0.2s; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
+        .btn:hover { transform: translateY(-2px); }
+        .btn-play { background: #2ecc71; }
+        .btn-discard { background: #e67e22; }
+
+        .result-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 99999; justify-content: center; align-items: center; color: white; }
+        .result-box { background: #1e272e; padding: 40px; border-radius: 20px; border: 3px solid #f1c40f; max-width: 500px; width: 90%; }
+        .result-title { font-size: 36px; font-weight: bold; margin-bottom: 20px; color: #f1c40f; }
+        .result-scores { font-size: 20px; margin: 25px 0; line-height: 1.8; text-align: left; background: rgba(0,0,0,0.3); padding: 15px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.05); }
+        .btn-restart { background: #e74c3c; color: white; font-size: 18px; padding: 12px 35px; border-radius: 8px; cursor: pointer; border: none; font-weight: bold; }
+    </style>
+</head>
+<body id="body-layout">
+
+    <div id="turn-toast" class="toast-notification">🔔 당신의 턴입니다!</div>
+
+    <h1>🌐 로스트시티 익스트림 디럭스 (최종 완전판)</h1>
+    
+    <div class="info-panel">
+        <div id="player-role">접속 중...</div>
+        <div id="game-status" style="color: #f1c40f;">방을 생성하거나 참여하는 중입니다.</div>
+        <div id="share-url" style="font-size: 11px; color: #bdc3c7; background: rgba(0,0,0,0.4); padding: 4px 8px; border-radius: 4px; display:none;"></div>
+        <button id="notif-toggle-btn" class="notif-toggle-btn" onclick="toggleNotification()">🔕 바탕화면 알림: 꺼짐</button>
+        <button id="ai-start-btn" class="ai-mode-btn" onclick="startAIMode()">🤖 AI와 대전하기</button>
+    </div>
+
+    <div id="score-area" class="score-board">나: 0점 | 상대: 0점</div>
+
+    <div class="main-container">
+        <div id="game-table" class="game-table waiting">
+            <div class="section">
+                <h3 id="opp-title">🛡️ 상대방의 탐험 지도</h3>
+                <div class="grid-5">
+                    <div class="column col-red"><div class="column-header"><h4 id="title-opp-red">🔴 화산 동굴 (0점)</h4><span class="history-badge" id="hist-opp-red">내역: 없음</span></div><div class="stacked-container" id="container-opp-red"></div></div>
+                    <div class="column col-blue"><div class="column-header"><h4 id="title-opp-blue">🔵 심해 유적 (0점)</h4><span class="history-badge" id="hist-opp-blue">내역: 없음</span></div><div class="stacked-container" id="container-opp-blue"></div></div>
+                    <div class="column col-green"><div class="column-header"><h4 id="title-opp-green">🟢 원시림 (0점)</h4><span class="history-badge" id="hist-opp-green">내역: 없음</span></div><div class="stacked-container" id="container-opp-green"></div></div>
+                    <div class="column col-yellow"><div class="column-header"><h4 id="title-opp-yellow">🟡 황금 사막 (0점)</h4><span class="history-badge" id="hist-opp-yellow">내역: 없음</span></div><div class="stacked-container" id="container-opp-yellow"></div></div>
+                    <div class="column col-white"><div class="column-header"><h4 id="title-opp-white">⚪ 설산 빙벽 (0점)</h4><span class="history-badge" id="hist-opp-white">내역: 없음</span></div><div class="stacked-container" id="container-opp-white"></div></div>
+                </div>
+            </div>
+
+            <div class="section" style="background: rgba(20, 30, 40, 0.4); flex-direction: row; align-items: center; padding: 5px 15px;">
+                <button id="deck-draw-btn" class="deck-btn" onclick="animateDeckDraw()" style="margin-right: 20px;">🎴 덱 뽑기 (<span id="deck-count">60</span>장)</button>
+                <div class="grid-5" style="align-items: center;">
+                    <div class="column col-red" style="min-height:90px; padding: 2px;"><div class="stacked-container" id="box-disc-red" style="padding-top:0;"></div></div>
+                    <div class="column col-blue" style="min-height:90px; padding: 2px;"><div class="stacked-container" id="box-disc-blue" style="padding-top:0;"></div></div>
+                    <div class="column col-green" style="min-height:90px; padding: 2px;"><div class="stacked-container" id="box-disc-green" style="padding-top:0;"></div></div>
+                    <div class="column col-yellow" style="min-height:90px; padding: 2px;"><div class="stacked-container" id="box-disc-yellow" style="padding-top:0;"></div></div>
+                    <div class="column col-white" style="min-height:90px; padding: 2px;"><div class="stacked-container" id="box-disc-white" style="padding-top:0;"></div></div>
+                </div>
+            </div>
+
+            <div class="section">
+                <h3>⛳ 나의 탐험 지도</h3>
+                <div class="grid-5">
+                    <div class="column col-red"><div class="column-header"><h4 id="title-my-red">🔴 화산 동굴 (0점)</h4><span class="history-badge" id="hist-my-red">내역: 없음</span></div><div class="stacked-container" id="container-my-red"></div></div>
+                    <div class="column col-blue"><div class="column-header"><h4 id="title-my-blue">🔵 심해 유적 (0점)</h4><span class="history-badge" id="hist-my-blue">내역: 없음</span></div><div class="stacked-container" id="container-my-blue"></div></div>
+                    <div class="column col-green"><div class="column-header"><h4 id="title-my-green">🟢 원시림 (0점)</h4><span class="history-badge" id="hist-my-green">내역: 없음</span></div><div class="stacked-container" id="container-my-green"></div></div>
+                    <div class="column col-yellow"><div class="column-header"><h4 id="title-my-yellow">🟡 황금 사막 (0점)</h4><span class="history-badge" id="hist-my-yellow">내역: 없음</span></div><div class="stacked-container" id="container-my-yellow"></div></div>
+                    <div class="column col-white"><div class="column-header"><h4 id="title-my-white">⚪ 설산 빙벽 (0점)</h4><span class="history-badge" id="hist-my-white">내역: 없음</span></div><div class="stacked-container" id="container-my-white"></div></div>
+                </div>
+            </div>
+
+            <div id="action-panel" class="action-panel">
+                <button class="btn btn-play" onclick="animateAndExecute('PLAY')">⛳ 내 탐험지에 꽂기</button>
+                <button class="btn btn-discard" onclick="animateAndExecute('DISCARD')">🗑️ 버리기</button>
+            </div>
+
+            <div class="section" style="background: rgba(10, 15, 20, 0.6); padding: 8px;">
+                <h3 style="margin-bottom: 5px;">🃏 내 손패</h3>
+                <div id="my-hand" class="card-list"></div>
+            </div>
+        </div>
+
+        <div class="chat-container">
+            <h3 style="margin: 0 0 10px 0; color:#f1c40f;">💬 무전기</h3>
+            <div id="chat-messages" class="chat-messages">
+                <div class="msg-item msg-system">서버와 연결되었습니다.</div>
+            </div>
+            <div class="chat-input-area">
+                <input type="text" id="chat-input" class="chat-input" placeholder="메시지 입력 (엔터)" onkeypress="if(event.keyCode==13) sendChatMessage()">
+                <button class="chat-btn" onclick="sendChatMessage()">전송</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="result-screen" class="result-overlay">
+        <div class="result-box">
+            <div id="final-winner-title" class="result-title">🎉 WINNER!</div>
+            <div id="final-score-details" class="result-scores">유저 1 점수 계산중...</div>
+            <button class="btn-restart" onclick="executeServerReset()">🔄 한 판 더하기 (방 초기화)</button>
+        </div>
+    </div>
+
+    <script>
+        const firebaseConfig = {
+            databaseURL: "https://lostcities-572f9-default-rtdb.firebaseio.com/"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+
+        const urlParams = new URLSearchParams(window.location.search);
+        let roomId = urlParams.get('room');
+        if (!roomId) {
+            roomId = Math.random().toString(36).substring(2, 7);
+            window.history.pushState({}, '', `?room=${roomId}`);
+        }
+
+        const roomRef = database.ref('rooms/' + roomId);
+        const chatRef = database.ref('chats/' + roomId);
+        const colors = ['red', 'blue', 'green', 'yellow', 'white'];
+
+        const adventureData = {
+            red:    { name: "🔴 화산 동굴" },
+            blue:   { name: "🔵 심해 유적" },
+            green:  { name: "🟢 원시림" },
+            yellow: { name: "🟡 황금 사막" },
+            white:  { name: "⚪ 설산 빙벽" }
+        };
+
+        function getCustomCardImage(color, label) {
+            let fileLabel = label.toLowerCase(); 
+            // 🚨 띄어쓰기를 언더바(_)로 치환 (경로 깨짐 완벽 방지)
+            return `images/${color}_${fileLabel}.png`; 
+        }
+
+        let myRole = null;
+        let roomData = null;
+        let selectedHandIndex = null;
+        let isAnimating = false;
+        
+        // 초기에는 알림 꺼짐 상태로 시작
+        let isNotifEnabled = false; 
+        let previousTurnTracker = null;
+
+        function toggleNotification() {
+            isNotifEnabled = !isNotifEnabled;
+            const btn = document.getElementById('notif-toggle-btn');
+            btn.innerText = isNotifEnabled ? '🔔 바탕화면 알림: 켜짐' : '🔕 바탕화면 알림: 꺼짐';
+            btn.style.background = isNotifEnabled ? '#2ecc71' : '#7f8c8d';
+
+            if (isNotifEnabled) {
+                if (Notification.permission !== "granted") {
+                    Notification.requestPermission().then(permission => {
+                        if (permission === "granted") {
+                            new Notification("로스트시티 알림 설정", { body: "알림 설정이 완료되었습니다! 턴이 오면 알려드릴게요." });
+                        }
+                    });
+                } else {
+                    new Notification("로스트시티 알림 테스트", { body: "알림이 정상적으로 작동 중입니다." });
+                }
+            }
+        }
+
+        function showTurnToastPopup() {
+            if (!isNotifEnabled) return;
+            const toast = document.getElementById('turn-toast');
+            toast.style.display = 'block';
+            setTimeout(() => { toast.style.opacity = '1'; toast.style.transform = 'translate(-50%, -50%) scale(1.1)'; }, 10);
+            setTimeout(() => { toast.style.transform = 'translate(-50%, -50%) scale(1)'; }, 150);
+            
+            setTimeout(() => { 
+                toast.style.opacity = '0'; 
+                setTimeout(() => { toast.style.display = 'none'; }, 300);
+            }, 1500);
+        }
+
+        function sendSystemNotification() {
+            if (!isNotifEnabled) return;
+            
+            if (document.hidden && Notification.permission === "granted") {
+                const notification = new Notification("🗺️ 로스트시티", {
+                    body: "내 차례가 되었습니다! 게임 창으로 돌아오세요."
+                });
+                
+                notification.onclick = function() {
+                    window.focus();
+                    this.close();
+                };
+            }
+        }
+
+        roomRef.once('value').then((snapshot) => {
+            let currentData = snapshot.val();
+            if (currentData === null || currentData.gameState === 'RESETTING') {
+                setupNewGameInit();
+            } else {
+                myRole = 'p2';
+                roomRef.child('p2_online').set(true);
+                roomRef.child('gameState').set('PLAYING');
+            }
+
+            document.getElementById('player-role').innerText = `당신은 [Player ${myRole === 'p1' ? '1 (방장)' : '2 (참가자)'}] 입니다.`;
+            const shareUrlDiv = document.getElementById('share-url');
+            shareUrlDiv.style.display = 'block';
+            shareUrlDiv.innerText = `초대 링크: ${window.location.origin}${window.location.pathname}?room=${roomId}`;
+
+            roomRef.on('value', (snap) => {
+                const incomingData = snap.val();
+                if (!incomingData) return;
+                
+                if (incomingData.gameState === 'RESETTING') { location.reload(); return; }
+
+                let motionTriggered = false;
+
+                if (roomData && incomingData && !isAnimating) {
+                    const oppRole = myRole === 'p1' ? 'p2' : 'p1';
+                    if (roomData.turn === oppRole && roomData.step === 'PLAY' && incomingData.step === 'DRAW') {
+                        motionTriggered = triggerOpponentActionMotion(roomData, incomingData, oppRole);
+                    }
+                    else if (roomData.turn === oppRole && roomData.step === 'DRAW' && incomingData.turn === myRole) {
+                        motionTriggered = triggerOpponentDrawMotion(roomData, incomingData, oppRole);
+                    }
+                }
+
+                roomData = incomingData;
+                
+                if (!isAnimating && !motionTriggered) {
+                    updateGameUI();
+                    checkAndRunAI();
+                }
+            });
+
+            chatRef.limitToLast(20).on('child_added', (snapshot) => {
+                appendChatMessageUI(snapshot.val());
+            });
+        });
+
+        function checkAndRunAI() {
+            if (myRole === 'p1' && roomData && roomData.isAIMode && roomData.gameState === 'PLAYING' && roomData.turn === 'p2') {
+                setTimeout(runAIIntelligence, 500);
+            }
+        }
+
+        function triggerOpponentActionMotion(oldState, newState, oppRole) {
+            let triggered = false;
+            colors.forEach(color => {
+                const oldField = (oldState[`${oppRole}_field`][color] || []).filter(c => c !== 0);
+                const newField = (newState[`${oppRole}_field`][color] || []).filter(c => c !== 0);
+                if (newField.length > oldField.length) {
+                    executeOpponentVirtualAnimation(newField[newField.length - 1], `container-opp-${color}`);
+                    triggered = true;
+                }
+                const oldDisc = (oldState.discardPiles[color] || []).filter(c => c !== 0);
+                const newDisc = (newState.discardPiles[color] || []).filter(c => c !== 0);
+                if (newDisc.length > oldDisc.length) {
+                    executeOpponentVirtualAnimation(newDisc[newDisc.length - 1], `box-disc-${color}`);
+                    triggered = true;
+                }
+            });
+            return triggered;
+        }
+
+        function triggerOpponentDrawMotion(oldState, newState, oppRole) {
+            let triggered = false;
+            const oldHand = oldState[`${oppRole}_hand`] || [];
+            const newHand = newState[`${oppRole}_hand`] || [];
+            
+            if (newHand.length > oldHand.length) {
+                // 방어 코드 추가: deck이 undefined일 수 있으므로 length 확인
+                const oldDeckLen = oldState.deck ? oldState.deck.length : 0;
+                const newDeckLen = newState.deck ? newState.deck.length : 0;
+
+                if (newDeckLen < oldDeckLen) {
+                    executeOpponentDrawAnimation("deck-draw-btn");
+                    triggered = true;
+                } else {
+                    colors.forEach(color => {
+                        const oldDisc = (oldState.discardPiles[color] || []).filter(c => c !== 0);
+                        const newDisc = (newState.discardPiles[color] || []).filter(c => c !== 0);
+                        if (newDisc.length < oldDisc.length) {
+                            executeOpponentDrawAnimation(`discard-top-${color}`);
+                            triggered = true;
+                        }
+                    });
+                }
+            }
+            return triggered;
+        }
+
+        function executeOpponentVirtualAnimation(cardObj, endId) {
+            const endEl = document.getElementById(endId);
+            if (!endEl) return;
+
+            isAnimating = true;
+            const clone = document.createElement('div');
+            clone.className = `card ${cardObj.color} flying-effect`;
+            clone.style.backgroundImage = `url('${cardObj.img}')`;
+            
+            clone.style.left = `${window.innerWidth / 2 - 29}px`;
+            clone.style.top = `-100px`;
+            document.body.appendChild(clone);
+
+            const endRect = endEl.getBoundingClientRect();
+
+            setTimeout(() => {
+                clone.style.left = `${endRect.left + (endRect.width/2) - 29}px`;
+                clone.style.top = `${endRect.top + 20}px`;
+                clone.style.transform = 'scale(0.9) rotate(-10deg)';
+                clone.style.opacity = '0.5';
+            }, 20);
+
+            setTimeout(() => {
+                clone.remove();
+                isAnimating = false;
+                updateGameUI();
+                checkAndRunAI();
+            }, 370);
+        }
+
+        function executeOpponentDrawAnimation(startId) {
+            const startEl = document.getElementById(startId);
+            if (!startEl) return;
+
+            isAnimating = true;
+            const clone = document.createElement('div');
+            clone.className = `card flying-effect`;
+            clone.style.background = '#2c3e50';
+            clone.style.border = '2px solid #bdc3c7';
+            
+            const startRect = startEl.getBoundingClientRect();
+            clone.style.left = `${startRect.left + (startRect.width/2) - 29}px`;
+            clone.style.top = `${startRect.top}px`;
+            document.body.appendChild(clone);
+
+            setTimeout(() => {
+                clone.style.left = `${window.innerWidth / 2 - 29}px`;
+                clone.style.top = `-100px`;
+                clone.style.transform = 'scale(0.8) rotate(180deg)';
+                clone.style.opacity = '0.0';
+            }, 20);
+
+            setTimeout(() => {
+                clone.remove();
+                isAnimating = false;
+                updateGameUI();
+                checkAndRunAI();
+            }, 370);
+        }
+
+        function setupNewGameInit() {
+            myRole = 'p1';
+            const randomFirstTurn = Math.random() < 0.5 ? 'p1' : 'p2';
+            let newRoom = {
+                p1_online: true, p2_online: false, isAIMode: false, gameState: 'WAITING',
+                turn: randomFirstTurn, step: 'PLAY', deck: createShuffledDeck(),
+                discardPiles: { red: [0], blue: [0], green: [0], yellow: [0], white: [0] },
+                p1_hand: [], p2_hand: [],
+                p1_field: { red: [0], blue: [0], green: [0], yellow: [0], white: [0] },
+                p2_field: { red: [0], blue: [0], green: [0], yellow: [0], white: [0] },
+                lastDiscardedColor: 'none'
+            };
+            for(let i=0; i<8; i++) {
+                newRoom.p1_hand.push(newRoom.deck.pop());
+                newRoom.p2_hand.push(newRoom.deck.pop());
+            }
+            roomRef.set(newRoom);
+            document.getElementById('ai-start-btn').style.display = 'inline-block';
+        }
+
+        function executeServerReset() {
+            roomRef.set({ gameState: 'RESETTING' }).then(() => { setupNewGameInit(); });
+        }
+
+        function sendChatMessage() {
+            const inputEl = document.getElementById('chat-input');
+            const messageText = inputEl.value.trim();
+            if(!messageText) return;
+            chatRef.push({ sender: myRole, text: messageText });
+            inputEl.value = '';
+        }
+
+        function appendChatMessageUI(chatData) {
+            const chatMessagesDiv = document.getElementById('chat-messages');
+            const msgEl = document.createElement('div');
+            if (chatData.sender === 'system') {
+                msgEl.className = 'msg-item msg-system'; msgEl.innerText = chatData.text;
+            } else {
+                const senderName = chatData.sender === 'p1' ? 'Player 1' : 'Player 2';
+                msgEl.className = `msg-item msg-${chatData.sender}`; msgEl.innerText = `${senderName}: ${chatData.text}`;
+            }
+            chatMessagesDiv.appendChild(msgEl);
+            chatMessagesDiv.scrollTop = chatMessagesDiv.scrollHeight;
+        }
+
+        function startAIMode() {
+            if(!roomData) return;
+            roomData.p2_online = true; roomData.isAIMode = true; roomData.gameState = 'PLAYING';
+            document.getElementById('ai-start-btn').style.display = 'none';
+            roomRef.set(roomData);
+            chatRef.push({ sender: 'system', text: "🤖 인공지능 보드가 대전 상대로 등판했습니다." });
+        }
+
+        function createShuffledDeck() {
+            let tempDeck = [];
+            colors.forEach(color => {
+                for(let i=0; i<3; i++) tempDeck.push({ color, value: 0, label: 'X', img: getCustomCardImage(color, 'X') });
+                for(let i=2; i<=10; i++) tempDeck.push({ color, value: i, label: i.toString(), img: getCustomCardImage(color, i.toString()) });
+            });
+            return tempDeck.sort(() => Math.random() - 0.5);
+        }
+
+        function createCardElement(card, index, isClickable, idPrefix = "") {
+            const cardEl = document.createElement('div');
+            const isSelected = (index !== null && index === selectedHandIndex);
+            
+            cardEl.className = `card ${card.color} ${isSelected ? 'selected' : ''}`;
+            if(idPrefix && index !== null) cardEl.id = `${idPrefix}-${index}`;
+            cardEl.style.backgroundImage = `url('${card.img}')`;
+
+            const numEl = document.createElement('div');
+            numEl.className = 'card-num'; numEl.innerText = card.label; cardEl.appendChild(numEl);
+
+            const labelEl = document.createElement('div');
+            labelEl.className = 'card-bg-label'; labelEl.innerText = card.value === 0 ? "투자" : "탐험"; cardEl.appendChild(labelEl);
+
+            if(isClickable) { cardEl.onclick = () => { if(!isAnimating) { selectedHandIndex = index; updateGameUI(); } }; }
+            return cardEl;
+        }
+
+        function updateGameUI() {
+            const tableDiv = document.getElementById('game-table');
+            const statusText = document.getElementById('game-status');
+            const deckBtn = document.getElementById('deck-draw-btn');
+            const actionPanel = document.getElementById('action-panel');
+            
+            document.getElementById('deck-count').innerText = roomData.deck ? roomData.deck.length : 0;
+            
+            if (roomData.gameState === 'WAITING') {
+                statusText.innerText = "⏳ 친구를 기다리는 중입니다... 초대 링크를 복사해서 카톡으로 보내세요!";
+                tableDiv.className = "game-table waiting"; return;
+            }
+            if (roomData.gameState === 'GAME_OVER') {
+                statusText.innerText = "🏁 게임이 종료되었습니다!"; tableDiv.className = "game-table waiting"; showFinalScores(); return;
+            }
+
+            tableDiv.className = "game-table active";
+            const isMyTurn = (roomData.turn === myRole);
+
+            if (isMyTurn && previousTurnTracker !== myRole && previousTurnTracker !== null) {
+                showTurnToastPopup(); 
+                sendSystemNotification(); 
+            }
+            previousTurnTracker = roomData.turn;
+
+            if (isMyTurn) {
+                if (roomData.step === 'PLAY') {
+                    statusText.innerText = "🟢 당신의 턴: 카드를 선택한 후 내려놓거나 버리세요.";
+                    deckBtn.disabled = true; actionPanel.style.display = selectedHandIndex !== null ? 'flex' : 'none';
+                } else {
+                    statusText.innerText = "🔵 당신의 턴: 카드를 채워야 합니다! 덱을 누르거나 버림판 카드를 가져오세요.";
+                    deckBtn.disabled = false; actionPanel.style.display = 'none';
+                }
+            } else {
+                statusText.innerText = roomData.isAIMode ? "🤖 AI가 고심하며 연산하고 있습니다..." : "🔴 상대방 턴: 상대방이 플레이하는 중입니다. 기다려주세요...";
+                deckBtn.disabled = true; actionPanel.style.display = 'none'; selectedHandIndex = null;
+            }
+
+            const myHand = roomData[`${myRole}_hand`] || [];
+            const handDiv = document.getElementById('my-hand'); handDiv.innerHTML = '';
+            myHand.forEach((card, index) => { handDiv.appendChild(createCardElement(card, index, isMyTurn && roomData.step === 'PLAY', "my-card")); });
+
+            // 내 탐험지 렌더링
+            colors.forEach(color => {
+                const myFieldContainer = document.getElementById(`container-my-${color}`); 
+                myFieldContainer.innerHTML = '';
+                const cards = roomData[`${myRole}_field`][color] || [];
+                let historyLabels = [];
+
+                cards.forEach(card => { 
+                    if(card !== 0) { 
+                        const cardEl = createCardElement(card, null, false);
+                        cardEl.className += ' stacked-card';
+                        myFieldContainer.appendChild(cardEl);
+                        historyLabels.push(card.label);
+                    } 
+                });
+                const historyText = historyLabels.length > 0 ? `내역: [${historyLabels.join(', ')}]` : '내역: 없음';
+                document.getElementById(`title-my-${color}`).innerText = `${adventureData[color].name} (${calcLineScore(roomData[`${myRole}_field`][color])}점)`;
+                document.getElementById(`hist-my-${color}`).innerText = historyText;
+            });
+
+            // 상대방 탐험지 렌더링
+            const oppRole = myRole === 'p1' ? 'p2' : 'p1';
+            colors.forEach(color => {
+                const oppFieldContainer = document.getElementById(`container-opp-${color}`); 
+                oppFieldContainer.innerHTML = '';
+                const cards = roomData[`${oppRole}_field`][color] || [];
+                let historyLabels = [];
+
+                cards.forEach(card => { 
+                    if(card !== 0) { 
+                        const cardEl = createCardElement(card, null, false);
+                        cardEl.className += ' stacked-card';
+                        oppFieldContainer.appendChild(cardEl);
+                        historyLabels.push(card.label);
+                    } 
+                });
+                const historyText = historyLabels.length > 0 ? `내역: [${historyLabels.join(', ')}]` : '내역: 없음';
+                document.getElementById(`title-opp-${color}`).innerText = `${adventureData[color].name} (${calcLineScore(roomData[`${oppRole}_field`][color])}점)`;
+                document.getElementById(`hist-opp-${color}`).innerText = historyText;
+            });
+
+            // 버림판 렌더링
+            colors.forEach(color => {
+                const specificContainer = document.getElementById(`box-disc-${color}`);
+                specificContainer.innerHTML = '';
+                
+                const pile = roomData.discardPiles[color] || []; 
+                const realCards = pile.filter(c => c !== 0);
+
+                realCards.forEach((cardObj, index) => {
+                    const cardEl = createCardElement(cardObj, null, false);
+                    cardEl.className += ' stacked-card';
+                    
+                    if (index === realCards.length - 1) {
+                        cardEl.id = `discard-top-${color}`;
+                        if(isMyTurn && roomData.step === 'DRAW') {
+                            cardEl.onclick = () => animateDiscardDraw(color);
+                        }
+                    } else {
+                        cardEl.onclick = null;
+                        cardEl.style.cursor = 'help'; 
+                    }
+                    specificContainer.appendChild(cardEl);
+                });
+            });
+
+            document.getElementById('score-area').innerText = `나: ${calcPlayerScore(myRole)}점 | 상대: ${calcPlayerScore(oppRole)}점`;
+        }
+
+        function animateAndExecute(actionType) {
+            if (selectedHandIndex === null || isAnimating) return;
+            const cardObj = roomData[`${myRole}_hand`][selectedHandIndex];
+            
+            // 🎯 로스트시티 룰 적용 (오름차순, 투자 카드 선행 검증)
+            if (actionType === 'PLAY') {
+                const colorField = roomData[`${myRole}_field`][cardObj.color].filter(c => c !== 0);
+                if (colorField.length > 0) {
+                    const lastCard = colorField[colorField.length - 1];
+                    if (cardObj.value < lastCard.value) { alert("⛔ 더 크거나 같은 숫자만 가능합니다."); return; }
+                    if (cardObj.value === 0 && lastCard.value > 0) { alert("⛔ 투자 카드는 먼저 내야 합니다."); return; }
+                }
+            }
+
+            const originCardEl = document.getElementById(`my-card-${selectedHandIndex}`);
+            if (!originCardEl) {
+                if (actionType === 'PLAY') executePlay(); else executeDiscard();
+                return;
+            }
+
+            isAnimating = true;
+            const clone = document.createElement('div');
+            clone.className = `card ${cardObj.color} flying-effect`;
+            clone.style.backgroundImage = `url('${cardObj.img}')`;
+            
+            const rect = originCardEl.getBoundingClientRect();
+            clone.style.left = `${rect.left}px`;
+            clone.style.top = `${rect.top}px`;
+            document.body.appendChild(clone);
+            
+            originCardEl.style.opacity = '0';
+
+            let destinationId = actionType === 'PLAY' ? `container-my-${cardObj.color}` : `box-disc-${cardObj.color}`;
+            let targetEl = document.getElementById(destinationId);
+            const targetRect = targetEl.getBoundingClientRect();
+
+            setTimeout(() => {
+                clone.style.left = `${targetRect.left + (targetRect.width/2) - 29}px`;
+                clone.style.top = `${targetRect.top + 20}px`;
+                clone.style.transform = 'scale(0.9) rotate(5deg)';
+                clone.style.opacity = '0.5';
+            }, 20);
+
+            setTimeout(() => {
+                clone.remove();
+                isAnimating = false;
+                if (actionType === 'PLAY') executePlay(); else executeDiscard();
+            }, 370);
+        }
+
+        function animateDiscardDraw(color) {
+            if(isAnimating) return;
+            const targetTopCard = document.getElementById(`discard-top-${color}`);
+            if(!targetTopCard) { drawFromDiscard(color); return; }
+
+            isAnimating = true;
+            const clone = document.createElement('div');
+            clone.className = `card ${color} flying-effect`;
+            clone.style.backgroundImage = targetTopCard.style.backgroundImage;
+            
+            const rect = targetTopCard.getBoundingClientRect();
+            clone.style.left = `${rect.left}px`;
+            clone.style.top = `${rect.top}px`;
+            document.body.appendChild(clone);
+
+            const handArea = document.getElementById('my-hand');
+            const handRect = handArea.getBoundingClientRect();
+
+            setTimeout(() => {
+                clone.style.left = `${handRect.left + (handRect.width/2) - 29}px`;
+                clone.style.top = `${handRect.top + 10}px`;
+                clone.style.transform = 'scale(1.1) rotate(-5deg)';
+            }, 20);
+
+            setTimeout(() => {
+                clone.remove();
+                isAnimating = false;
+                drawFromDiscard(color);
+            }, 370);
+        }
+
+        function animateDeckDraw() {
+            if(isAnimating || document.getElementById('deck-draw-btn').disabled) return;
+            const deckBtn = document.getElementById('deck-draw-btn');
+            
+            isAnimating = true;
+            const clone = document.createElement('div');
+            clone.className = 'card flying-effect';
+            clone.style.background = '#2c3e50';
+            clone.style.border = '2px solid #f1c40f';
+            
+            const btnRect = deckBtn.getBoundingClientRect();
+            clone.style.left = `${btnRect.left + (btnRect.width/2) - 29}px`;
+            clone.style.top = `${btnRect.top}px`;
+            document.body.appendChild(clone);
+
+            const handArea = document.getElementById('my-hand');
+            const handRect = handArea.getBoundingClientRect();
+
+            setTimeout(() => {
+                clone.style.left = `${handRect.left + (handRect.width/2) - 29}px`;
+                clone.style.top = `${handRect.top + 10}px`;
+                clone.style.transform = 'scale(1) rotate(0deg)';
+            }, 20);
+
+            setTimeout(() => {
+                clone.remove();
+                isAnimating = false;
+                drawFromDeck();
+            }, 370);
+        }
+
+        function executePlay() {
+            const myHand = roomData[`${myRole}_hand`]; const card = myHand[selectedHandIndex];
+            roomData[`${myRole}_field`][card.color].push(myHand.splice(selectedHandIndex, 1)[0]);
+            roomData.step = 'DRAW'; roomData.lastDiscardedColor = 'none'; selectedHandIndex = null; roomRef.set(roomData);
+        }
+
+        function executeDiscard() {
+            const myHand = roomData[`${myRole}_hand`]; const card = myHand[selectedHandIndex];
+            roomData.discardPiles[card.color].push(myHand.splice(selectedHandIndex, 1)[0]);
+            roomData.step = 'DRAW'; roomData.lastDiscardedColor = card.color; selectedHandIndex = null; roomRef.set(roomData);
+        }
+
+        // 🚨 수정 포인트: deck이 빈 배열일 경우 방어 처리
+        function drawFromDeck() {
+            if (!roomData.deck || roomData.deck.length === 0) return; 
+
+            const myHand = roomData[`${myRole}_hand`] || []; myHand.push(roomData.deck.pop());
+            
+            if (!roomData.deck || roomData.deck.length === 0) { roomData.gameState = 'GAME_OVER'; } 
+            else { roomData.turn = myRole === 'p1' ? 'p2' : 'p1'; roomData.step = 'PLAY'; }
+            
+            roomRef.set(roomData);
+        }
+
+        function drawFromDiscard(color) {
+            // 🎯 룰 적용: 방금 버린 카드를 즉시 가져올 수 없음
+            if (color === roomData.lastDiscardedColor) { alert("⛔ 방금 본인이 버린 카드는 즉시 가져올 수 없습니다!"); return; }
+            if (!roomData.discardPiles[color] || roomData.discardPiles[color].length === 0) return;
+
+            const myHand = roomData[`${myRole}_hand`] || []; myHand.push(roomData.discardPiles[color].pop());
+            roomData.turn = myRole === 'p1' ? 'p2' : 'p1'; roomData.step = 'PLAY'; roomRef.set(roomData);
+        }
+
+        // 🚨 수정 포인트: AI 배열 및 덱 검증 방어 처리 추가
+        function runAIIntelligence() {
+            if(roomData.turn !== 'p2' || roomData.gameState !== 'PLAYING') return;
+            const aiHand = roomData.p2_hand || [];
+            if(aiHand.length === 0) return;
+            
+            if(roomData.step === 'PLAY') {
+                let aiPlaySuccess = false;
+                for(let i=0; i<aiHand.length; i++) {
+                    const card = aiHand[i];
+                    if(card.value === 0) {
+                        const targetField = roomData.p2_field[card.color].filter(c => c !== 0);
+                        if(targetField.length === 0) {
+                            roomData.p2_field[card.color].push(aiHand.splice(i, 1)[0]);
+                            roomData.step = 'DRAW'; roomData.lastDiscardedColor = 'none';
+                            aiPlaySuccess = true; break;
+                        }
+                    }
+                }
+                if(!aiPlaySuccess) {
+                    let validPlays = [];
+                    for(let i=0; i<aiHand.length; i++) {
+                        const card = aiHand[i];
+                        if(card.value > 0) {
+                            const targetField = roomData.p2_field[card.color].filter(c => c !== 0);
+                            let isLegal = true;
+                            if(targetField.length > 0) {
+                                const lastC = targetField[targetField.length - 1];
+                                if(card.value < lastC.value) isLegal = false;
+                            }
+                            if(isLegal) validPlays.push({ handIndex: i, cardObj: card });
+                        }
+                    }
+                    if(validPlays.length > 0) {
+                        validPlays.sort((a,b) => a.cardObj.value - b.cardObj.value);
+                        const bestPlay = validPlays[0];
+                        roomData.p2_field[bestPlay.cardObj.color].push(aiHand.splice(bestPlay.handIndex, 1)[0]);
+                        roomData.step = 'DRAW'; roomData.lastDiscardedColor = 'none';
+                        aiPlaySuccess = true;
+                    }
+                }
+                if(!aiPlaySuccess) {
+                    aiHand.sort((a,b) => a.value - b.value);
+                    const discardedCard = aiHand.splice(0, 1)[0];
+                    roomData.discardPiles[discardedCard.color].push(discardedCard);
+                    roomData.step = 'DRAW'; roomData.lastDiscardedColor = discardedCard.color;
+                }
+                roomRef.set(roomData);
+            } 
+            else if(roomData.step === 'DRAW') {
+                let grabbedFromDiscard = false;
+                for(let i=0; i<colors.length; i++) {
+                    const color = colors[i];
+                    const pile = roomData.discardPiles[color].filter(c => c !== 0);
+                    if(pile.length > 0) {
+                        const topCard = pile[pile.length - 1];
+                        const myField = roomData.p2_field[color].filter(c => c !== 0);
+                        // AI도 방금 자기가 버린 카드는 주워오면 안 됨
+                        if(myField.length > 0 && topCard.value >= 7 && color !== roomData.lastDiscardedColor) {
+                            const lastMyCard = myField[myField.length - 1];
+                            if(topCard.value >= lastMyCard.value) {
+                                roomData.p2_hand.push(roomData.discardPiles[color].pop());
+                                grabbedFromDiscard = true; break;
+                            }
+                        }
+                    }
+                }
+                
+                if(!grabbedFromDiscard) { 
+                    if (roomData.deck && roomData.deck.length > 0) {
+                        roomData.p2_hand.push(roomData.deck.pop()); 
+                    }
+                }
+
+                if (!roomData.deck || roomData.deck.length === 0) { roomData.gameState = 'GAME_OVER'; } 
+                else { roomData.turn = 'p1'; roomData.step = 'PLAY'; }
+                
+                roomRef.set(roomData);
+            }
+        }
+
+        // 🎯 룰 적용: 점수 계산식 완벽 구현 (카드 합계 - 20) * 배수 + (8장 이상 보너스 20)
+        function calcLineScore(fieldArray) {
+            const fCards = (fieldArray || []).filter(c => c !== 0); if (fCards.length === 0) return 0;
+            let sum = 0; let mult = 1;
+            fCards.forEach(c => { if(c.value === 0) mult++; else sum += c.value; });
+            let line = (sum - 20) * mult; if(fCards.length >= 8) line += 20; return line;
+        }
+
+        function calcPlayerScore(role) {
+            let total = 0; const fields = roomData[`${role}_field`]; if(!fields) return 0;
+            colors.forEach(color => { total += calcLineScore(fields[color]); }); return total;
+        }
+
+        function showFinalScores() {
+            const myScore = calcPlayerScore(myRole); const oppRole = myRole === 'p1' ? 'p2' : 'p1'; const oppScore = calcPlayerScore(oppRole);
+            const winnerTitleEl = document.getElementById('final-winner-title'); const scoreDetailsEl = document.getElementById('final-score-details');
+
+            if (myScore === oppScore) { winnerTitleEl.innerText = "🤝 무승부 (DRAW)"; winnerTitleEl.style.color = "#bdc3c7"; } 
+            else if (myScore > oppScore) { winnerTitleEl.innerText = "🎉 당신의 승리 (VICTORY)!"; winnerTitleEl.style.color = "#2ecc71"; } 
+            else { winnerTitleEl.innerText = roomData.isAIMode ? "🤖 AI봇의 승리! 패배했습니다..." : "😭 당신의 패배 (DEFEAT)..."; winnerTitleEl.style.color = "#e74c3c"; }
+
+            scoreDetailsEl.innerHTML = `
+                <div style="font-size: 22px; text-align:center; font-weight:bold; border-bottom: 1px solid #7f8c8d; padding-bottom:10px; margin-bottom:10px;">🏆 최종 스코어 🏆</div>
+                <div style="display:flex; justify-content: space-between; margin-bottom: 8px;">
+                    <span>🥇 나의 최종 점수:</span> <span style="font-weight:bold; color:#2ecc71;">${myScore} 점</span>
+                </div>
+                <div style="display:flex; justify-content: space-between;">
+                    <span>🤖 상대방 점수:</span> <span style="font-weight:bold; color:#e74c3c;">${oppScore} 점</span>
+                </div>
+            `;
+            document.getElementById('result-screen').style.display = 'flex';
+        }
+    </script>
+</body>
+</html>
