@@ -3,10 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>로스트시티 익스트림 디럭스 (마스터 AI V8)</title>
+    <title>로스트시티 익스트림 디럭스 (마스터 AI V8.1)</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
     <style>
+        /* 🎨 풀스크린 고정 및 스케일링 배경 */
         body { 
             margin: 0; padding: 0; background: #0d1217; 
             display: flex; justify-content: center; align-items: center; 
@@ -22,6 +23,7 @@
             transform-origin: center center;
             box-shadow: 0 0 50px rgba(0,0,0,0.8);
             color: #fff; text-align: center;
+            flex-shrink: 0; /* 🚨 킹갓 중요: 창 크기가 작아져도 좌우 찌그러짐을 완전히 차단합니다 */
         }
         
         h1 { font-size: 24px; color: #f1c40f; text-shadow: 0 2px 10px rgba(241, 196, 15, 0.4); margin: 0 0 5px 0; }
@@ -152,7 +154,7 @@
 <div id="game-wrapper">
     <div id="turn-toast" class="toast-notification">🔔 당신의 턴입니다!</div>
 
-    <h1>🌐 로스트시티 익스트림 디럭스 (마스터 AI V8)</h1>
+    <h1>🌐 로스트시티 익스트림 디럭스 (마스터 AI V8.1)</h1>
     
     <div class="info-panel">
         <div id="player-role">접속 중...</div>
@@ -377,7 +379,6 @@
             });
         });
 
-        // 🚨 V8 업그레이드 마스터 AI 로직
         function checkAndRunAI() {
             if (myRole === 'p1' && roomData && roomData.isAIMode && roomData.gameState === 'PLAYING' && roomData.turn === 'p2') {
                 setTimeout(runAIIntelligence, 600);
@@ -389,7 +390,6 @@
             const aiHand = roomData.p2_hand || [];
             if(aiHand.length === 0) return;
 
-            // AI 색상별 상황 분석 (투자카드는 가치 5로 산정)
             let colorStats = { red:0, blue:0, green:0, yellow:0, white:0 };
             aiHand.forEach(c => colorStats[c.color] += Math.max(c.value, 5));
 
@@ -407,12 +407,10 @@
 
                     if(isLegal) {
                         if (myField.length === 0) {
-                            // 맨땅에 새 탐험 시작: 손패 점수가 최소 15점 이상일 때만 시작하여 마이너스 방지
                             if (colorStats[card.color] >= 15) { 
                                 validPlays.push({ handIndex: i, cardObj: card, score: card.value === 0 ? 100 : 50 - card.value });
                             }
                         } else {
-                            // 이미 시작한 라인: 제일 작은 숫자부터 안전하게 내기
                             validPlays.push({ handIndex: i, cardObj: card, score: 200 - card.value });
                         }
                     }
@@ -424,7 +422,6 @@
                     roomData.p2_field[bestPlay.cardObj.color].push(aiHand.splice(bestPlay.handIndex, 1)[0]);
                     roomData.step = 'DRAW'; roomData.lastDiscardedColor = 'none';
                 } else {
-                    // 낼 게 없을 때: 상대가 키우고 있는 색상은 피해서 버리기 (견제)
                     let discardOptions = [];
                     for(let i=0; i<aiHand.length; i++) {
                         const card = aiHand[i];
@@ -441,7 +438,6 @@
             }
             else if(roomData.step === 'DRAW') {
                 let grabbedFromDiscard = false;
-                // 버림판 줍줍: 내가 낼 수 있고, 가치가 6 이상이거나 투자카드면 훔쳐오기
                 for(let i=0; i<colors.length; i++) {
                     const color = colors[i];
                     const pile = roomData.discardPiles[color].filter(c => c !== 0);
@@ -616,7 +612,6 @@
             document.getElementById('result-screen').style.display = 'none';
             selectedHandIndex = null;
             isAnimating = false;
-
             roomRef.set(newRoom);
             
             setTimeout(() => {
@@ -782,7 +777,7 @@
                     cardEl.style.setProperty('--card-idx', index);
                     
                     if (index === realCards.length - 1) {
-                        cardEl.id = `discard-top-${color}`;
+                        document.getElementById(`title-opp-${color}`).innerText = `${adventureData[color].name} (${calcLineScore(roomData[`${oppRole}_field`][color])}점)`;
                     }
                     if(isMyTurn && roomData.step === 'DRAW') {
                         cardEl.onclick = () => animateDiscardDraw(color);
@@ -927,13 +922,12 @@
             roomData.turn = myRole === 'p1' ? 'p2' : 'p1'; roomData.step = 'PLAY'; roomRef.set(roomData);
         }
 
-        // 🚨 8장 이상일 경우 20점을 더하는 로직이 완벽하게 들어있습니다.
         function calcLineScore(fieldArray) {
             const fCards = (fieldArray || []).filter(c => c !== 0); if (fCards.length === 0) return 0;
             let sum = 0; let mult = 1;
             fCards.forEach(c => { if(c.value === 0) mult++; else sum += c.value; });
             let line = (sum - 20) * mult; 
-            if(fCards.length >= 8) line += 20; // 🚨 8장 이상 보너스 20점!
+            if(fCards.length >= 8) line += 20; 
             return line;
         }
 
