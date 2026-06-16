@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>로스트시티 익스트림 디럭스 (얼티밋 AI V11)</title>
+    <title>로스트시티 익스트림 디럭스 (얼티밋 V12)</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
     <style>
@@ -38,23 +38,35 @@
         .card.selected { border: 3px solid #f1c40f !important; transform: translateY(-15px) scale(1.12) !important; box-shadow: 0 15px 30px rgba(241, 196, 15, 0.5); z-index: 999 !important; }
         .card.flying-effect { position: absolute !important; z-index: 99999 !important; pointer-events: none !important; box-shadow: 0 20px 40px rgba(0,0,0,0.8) !important; margin-left: 0 !important; transition: left 0.35s cubic-bezier(0.2, 0.8, 0.2, 1), top 0.35s cubic-bezier(0.2, 0.8, 0.2, 1), transform 0.35s ease, opacity 0.35s ease !important; }
         .card.red { color: #ff9999; border-color: #c0392b; } .card.blue { color: #99ccff; border-color: #2980b9; } .card.green { color: #99ff99; border-color: #27ae60; } .card.yellow { color: #ffee99; border-color: #f39c12; } .card.white { color: #ffffff; border-color: #bdc3c7; }
-        .chat-container { flex: 1; max-width: 350px; background: rgba(30, 40, 50, 0.6); border-radius: 12px; box-shadow: 0 8px 20px rgba(0,0,0,0.5); padding: 12px; display: flex; flex-direction: column; height: 100%; box-sizing: border-box; border: 1px solid rgba(255,255,255,0.05); }
+        .chat-container { flex: 1; max-width: 350px; background: rgba(30, 40, 50, 0.6); border-radius: 12px; box-shadow: 0 8px 20px rgba(0,0,0,0.5); padding: 12px; display: flex; flex-direction: column; height: 100%; box-sizing: border-box; border: 1px solid rgba(255,255,255,0.05); position: relative; }
         .chat-messages { flex: 1; overflow-y: auto; border: 1px solid rgba(0,0,0,0.3); border-radius: 8px; padding: 10px; text-align: left; background: rgba(15, 20, 25, 0.8); font-size: 13px; margin-bottom: 8px; display: flex; flex-direction: column; gap: 6px; }
         .chat-input-area { display: flex; gap: 6px; } .chat-input { flex: 1; padding: 8px; border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; font-size: 13px; background: rgba(0,0,0,0.5); color: white; outline: none; } .chat-btn { background: #f1c40f; color: #101518; border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer; font-weight: bold; }
         .msg-item { padding: 6px 10px; border-radius: 8px; max-width: 85%; word-break: break-all; color: #fff; } .msg-p1 { background: #16a085; align-self: flex-start; border-bottom-left-radius: 2px; } .msg-p2 { background: #d35400; align-self: flex-start; border-bottom-left-radius: 2px; } .msg-system { background: rgba(255,255,255,0.05); color: #95a5a6; font-size: 11px; text-align: center; align-self: center; border-radius: 10px; }
         .deck-btn { background: #27ae60; color: white; border: none; padding: 8px 20px; font-size: 14px; border-radius: 6px; cursor: pointer; font-weight: bold; box-shadow: 0 4px 10px rgba(0,0,0,0.3); transition: 0.2s; } .deck-btn:disabled { background: #4b5563; color: #9ca3af; box-shadow: none; cursor: not-allowed; }
         .notif-toggle-btn { background: #2ecc71; color: white; border: none; padding: 6px 12px; font-size: 12px; border-radius: 6px; cursor: pointer; font-weight: bold; transition: 0.2s; box-shadow: inset 0 0 5px rgba(0,0,0,0.2); } .ai-mode-btn { background: #e74c3c; color: white; border: none; padding: 6px 12px; font-size: 12px; border-radius: 6px; cursor: pointer; font-weight: bold; }
+        .tutorial-toggle-btn { background: #3498db; color: white; border: none; padding: 6px 12px; font-size: 12px; border-radius: 6px; cursor: pointer; font-weight: bold; transition: 0.2s; box-shadow: 0 2px 5px rgba(0,0,0,0.3); } .tutorial-toggle-btn:hover { background: #2980b9; transform: translateY(-2px); }
         .action-panel { display: none; gap: 15px; justify-content: center; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(20, 30, 40, 0.95); padding: 20px 40px; border-radius: 15px; border: 2px solid #f1c40f; box-shadow: 0 10px 40px rgba(0,0,0,0.9), 0 0 30px rgba(241,196,15,0.4); z-index: 9999; }
         .btn { padding: 10px 25px; font-size: 14px; font-weight: bold; border-radius: 8px; cursor: pointer; border: none; color: white; transition: 0.2s; box-shadow: 0 4px 10px rgba(0,0,0,0.3); } .btn:hover { transform: translateY(-2px); } .btn-play { background: #2ecc71; } .btn-discard { background: #e67e22; }
         @keyframes fadeOverlay { from { background: rgba(0,0,0,0); backdrop-filter: blur(0px); } to { background: rgba(6, 10, 15, 0.88); backdrop-filter: blur(15px); } }
         @keyframes popupBox { from { transform: scale(0.85); opacity: 0; } to { transform: scale(1); opacity: 1; } }
         @keyframes pulseRestartBtn { 0% { box-shadow: 0 5px 15px rgba(0,0,0,0.4), 0 0 0px rgba(241,196,15,0); } 50% { box-shadow: 0 8px 25px rgba(0,0,0,0.6), 0 0 20px rgba(241,196,15,0.5); } 100% { box-shadow: 0 5px 15px rgba(0,0,0,0.4), 0 0 0px rgba(241,196,15,0); } }
-        .result-overlay { display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 99999; justify-content: center; align-items: center; color: white; animation: fadeOverlay 0.5s cubic-bezier(0.25, 1, 0.5, 1) forwards; }
+        .result-overlay, .turn-overlay, .ai-modal-overlay { display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 99999; justify-content: center; align-items: center; color: white; animation: fadeOverlay 0.5s cubic-bezier(0.25, 1, 0.5, 1) forwards; }
         .result-box { background: rgba(25, 35, 45, 0.95); padding: 50px 60px; border-radius: 28px; border: 3px solid #f1c40f; max-width: 550px; width: 90%; text-align: center; box-shadow: 0 30px 70px rgba(0,0,0,0.9); animation: popupBox 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards; box-sizing: border-box; }
         .result-title { font-size: 44px; font-weight: 900; margin-bottom: 25px; letter-spacing: -1px; text-shadow: 0 4px 15px rgba(0,0,0,0.7); }
         .result-scores { font-size: 22px; margin: 30px 0; line-height: 2; text-align: left; background: rgba(10, 15, 20, 0.6); padding: 20px 25px; border-radius: 16px; border: 1px solid rgba(255,255,255,0.07); box-shadow: inset 0 0 20px rgba(0,0,0,0.4); }
         .btn-restart { background: linear-gradient(135deg, #f1c40f 0%, #d4ac0d 100%); color: #0d1217; font-size: 20px; padding: 15px 45px; border-radius: 14px; cursor: pointer; border: 1px solid rgba(255,255,255,0.3); font-weight: 900; transition: transform 0.2s ease, background 0.2s; animation: pulseRestartBtn 2s infinite ease-in-out; } .btn-restart:hover { transform: scale(1.05); background: linear-gradient(135deg, #fce136 0%, #f1c40f 100%); }
-        .turn-overlay { display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 99998; background: rgba(0,0,0,0.85); justify-content: center; align-items: center; color: white; animation: fadeOverlay 0.3s ease forwards; }
+
+        /* 🚨 플로팅 튜토리얼 스타일 */
+        .tutorial-floating-box {
+            display: none; position: absolute; top: 70px; right: 380px; width: 340px;
+            background: rgba(15, 25, 35, 0.95); border: 2px solid #3498db; border-radius: 12px;
+            padding: 20px; color: #ecf0f1; text-align: left; box-shadow: 0 15px 40px rgba(0,0,0,0.9);
+            z-index: 99990; font-size: 14px; line-height: 1.6; pointer-events: auto;
+        }
+        .tutorial-floating-box h3 { margin: 0 0 12px 0; color: #3498db; border-bottom: 1px solid rgba(255,255,255,0.2); padding-bottom: 8px; display: flex; justify-content: space-between; align-items: center; }
+        .tutorial-floating-box ol { margin: 0; padding-left: 20px; }
+        .tutorial-floating-box li { margin-bottom: 10px; }
+        .tut-close-btn { cursor: pointer; color: #e74c3c; font-size: 18px; font-weight: bold; border:none; background:none; }
     </style>
 </head>
 <body id="body-layout">
@@ -62,14 +74,15 @@
 <div id="game-wrapper">
     <div id="turn-toast" class="toast-notification">🔔 당신의 턴입니다!</div>
 
-    <h1>🌐 로스트시티 익스트림 디럭스 (얼티밋 AI V11)</h1>
+    <h1>🌐 로스트시티 익스트림 디럭스 (얼티밋 V12)</h1>
     
     <div class="info-panel">
         <div id="player-role">접속 중...</div>
         <div id="game-status" style="color: #f1c40f;">방을 생성하거나 참여하는 중입니다.</div>
         <div id="share-url" style="font-size: 11px; color: #bdc3c7; background: rgba(0,0,0,0.4); padding: 4px 8px; border-radius: 4px; display:none;"></div>
         <button id="notif-toggle-btn" class="notif-toggle-btn" onclick="toggleNotification()">🔕 바탕화면 알림: 꺼짐</button>
-        <button id="ai-start-btn" class="ai-mode-btn" onclick="startAIMode()">🤖 AI와 대전하기</button>
+        <button id="ai-start-btn" class="ai-mode-btn" onclick="openAIModal()">🤖 AI와 대전하기</button>
+        <button class="tutorial-toggle-btn" onclick="toggleTutorial()">📖 규칙 설명 (튜토리얼)</button>
     </div>
 
     <div id="score-area" class="score-board">나: 0점 | 상대: 0점</div>
@@ -132,6 +145,36 @@
         </div>
     </div>
 
+    <!-- 🚨 플로팅 튜토리얼 패널 -->
+    <div id="tutorial-panel" class="tutorial-floating-box">
+        <h3><span>📖 로스트시티 핵심 규칙</span> <button class="tut-close-btn" onclick="toggleTutorial()">✖</button></h3>
+        <ol>
+            <li><b>목표:</b> 각 탐험지(색상)에 카드를 <b>오름차순</b>으로 놓아 가장 높은 점수를 내세요.</li>
+            <li><b>투자 카드(X):</b> 반드시 숫자 카드보다 먼저 놔야 합니다. 1장당 점수 배율이 늘어납니다.<br>(기본 x1, 1장 x2, 2장 x3, 3장 x4)</li>
+            <li><b>점수 계산:</b> 탐험을 시작하면(카드를 1장이라도 놓으면) <b>-20점</b>부터 시작합니다!<br><i>점수 = (카드 숫자 합 - 20) × 배율</i></li>
+            <li><b>보너스:</b> 한 색상에 카드를 <b>8장 이상</b> 놓으면 무조건 <b>+20점</b> 보너스를 받습니다.</li>
+            <li><b>턴 진행:</b> 내 턴에 카드를 1장 내고(탐험지 or 버림판), 1장을 뽑습니다(덱 or 버림판). 덱이 모두 떨어지면 게임 종료!</li>
+        </ol>
+        <div style="text-align:center; color:#2ecc71; margin-top:10px; font-weight:bold; font-size:13px; background:rgba(0,0,0,0.3); padding:8px; border-radius:8px;">
+            💡 TIP: 마이너스를 피하려면 손에 좋은 카드를 모은 뒤 시작하세요!
+        </div>
+    </div>
+
+    <!-- 🚨 AI 난이도 선택 모달 -->
+    <div id="ai-select-screen" class="ai-modal-overlay">
+        <div class="result-box">
+            <div class="result-title" style="font-size: 32px; color: #fff;">🤖 AI 난이도 선택</div>
+            <div style="font-size: 16px; margin-bottom: 30px; color: #bdc3c7;">상대할 인공지능의 수준을 선택해 주세요.</div>
+            <div style="display: flex; gap: 15px; justify-content: center;">
+                <button class="btn btn-play" onclick="executeAIStart('EASY')">🟢 초급 (튜토리얼)</button>
+                <button class="btn" style="background:#f39c12;" onclick="executeAIStart('NORMAL')">🟡 중급 (일반)</button>
+                <button class="btn" style="background:#e74c3c;" onclick="executeAIStart('HARD')">🔴 고급 (마스터)</button>
+            </div>
+            <button class="btn" style="margin-top:25px; background:transparent; border:1px solid rgba(255,255,255,0.3);" onclick="closeAIModal()">돌아가기</button>
+        </div>
+    </div>
+
+    <!-- 선공 선택 모달 -->
     <div id="turn-select-screen" class="turn-overlay">
         <div class="result-box">
             <div class="result-title" style="font-size: 28px; color: #fff;">🎲 선공 선택</div>
@@ -211,6 +254,13 @@
         let previousTurnTracker = null;
         let chatInitTime = Date.now();
 
+        // 🚨 튜토리얼 온/오프 함수
+        function toggleTutorial() {
+            const tut = document.getElementById('tutorial-panel');
+            if(tut.style.display === 'none' || tut.style.display === '') tut.style.display = 'block';
+            else tut.style.display = 'none';
+        }
+
         function toggleNotification() {
             isNotifEnabled = !isNotifEnabled;
             const btn = document.getElementById('notif-toggle-btn');
@@ -253,7 +303,6 @@
 
         roomRef.once('value').then((snapshot) => {
             let currentData = snapshot.val();
-            
             if (currentData === null) {
                 setupNewGameInit(); 
             } else {
@@ -301,10 +350,8 @@
                 }
                 
                 roomData = incomingData;
-                
                 if (!isAnimating && !motionTriggered) {
-                    updateGameUI(); 
-                    checkAndRunAI();
+                    updateGameUI(); checkAndRunAI();
                 }
             });
 
@@ -318,7 +365,29 @@
             });
         });
 
-        // 🚨 V11 얼티밋 다형성 AI 지능 (상황 인식 + 확률 변수 포함)
+        // 🚨 AI 모달 열기/닫기
+        function openAIModal() {
+            if(!roomData) return;
+            document.getElementById('ai-select-screen').style.display = 'flex';
+        }
+        function closeAIModal() {
+            document.getElementById('ai-select-screen').style.display = 'none';
+        }
+
+        // 🚨 AI 난이도 적용하여 시작
+        function executeAIStart(difficulty) {
+            document.getElementById('ai-select-screen').style.display = 'none';
+            roomData.p2_online = true; 
+            roomData.isAIMode = true; 
+            roomData.aiDifficulty = difficulty; // 난이도 저장
+            roomData.gameState = 'TURN_SELECT';
+            roomRef.set(roomData);
+            
+            let diffLabel = difficulty === 'EASY' ? '🟢 초급' : (difficulty === 'HARD' ? '🔴 고급' : '🟡 중급');
+            chatRef.push({ sender: 'system', text: `🤖 인공지능(${diffLabel}) 보드가 등판했습니다. 방장님, 선공을 선택해주세요.`, timestamp: Date.now() });
+        }
+
+        // 🚨 V12 궁극의 3단계 난이도 AI 알고리즘
         function checkAndRunAI() {
             if (myRole === 'p1' && roomData && roomData.isAIMode && roomData.gameState === 'PLAYING' && roomData.turn === 'p2') {
                 setTimeout(runAIIntelligence, 800);
@@ -331,22 +400,25 @@
             if(aiHand.length === 0) return;
 
             const deckLength = roomData.deck ? roomData.deck.length : 0;
+            const diff = roomData.aiDifficulty || 'NORMAL';
             
-            // 점수 대략 파악
             let myScore = 0; let oppScore = 0;
             colors.forEach(color => { 
                 myScore += calcLineScore(roomData.p2_field[color]); 
                 oppScore += calcLineScore(roomData.p1_field[color]); 
             });
 
-            // 색상별 가치 파악
             let colorStats = { red:0, blue:0, green:0, yellow:0, white:0 };
             aiHand.forEach(c => colorStats[c.color] += Math.max(c.value, 5));
 
-            // 🧠 동적 임계값 설정
-            let baseThreshold = deckLength > 30 ? 12 : (deckLength > 15 ? 15 : 21);
-            if (myScore < oppScore - 15 && deckLength > 10) baseThreshold -= 5; // 지고 있으면 도박
-            let currentThreshold = baseThreshold + (Math.floor(Math.random() * 5) - 2); // 턴마다 변수
+            // 🧠 난이도별 임계값 설정
+            let baseThreshold = 15;
+            if (diff === 'EASY') baseThreshold = 0; // 초급: 생각 안함 (무조건 냄)
+            else if (diff === 'HARD') baseThreshold = deckLength > 30 ? 15 : (deckLength > 15 ? 18 : 23); // 고급: 극도의 이득충
+            else baseThreshold = deckLength > 30 ? 12 : (deckLength > 15 ? 15 : 21); // 중급
+
+            if (diff !== 'EASY' && myScore < oppScore - 15 && deckLength > 10) baseThreshold -= 5;
+            let currentThreshold = baseThreshold + (diff === 'EASY' ? 0 : (Math.floor(Math.random() * 5) - 2));
 
             if(roomData.step === 'PLAY') {
                 let validPlays = [];
@@ -362,14 +434,12 @@
 
                     if(isLegal) {
                         if (myField.length === 0) {
-                            // 새로운 탐험 시작
                             if (colorStats[card.color] >= currentThreshold) { 
-                                let scoreOffset = deckLength <= 10 ? -50 : 0; // 극후반 맨땅 헤딩 방지
+                                let scoreOffset = (diff !== 'EASY' && deckLength <= 10) ? -50 : 0;
                                 validPlays.push({ handIndex: i, cardObj: card, score: (card.value === 0 ? 100 : 50 - card.value) + scoreOffset });
                             }
                         } else {
-                            // 이미 시작된 탐험 전개
-                            let rushBonus = deckLength <= 12 ? 100 : 0; // 후반 스퍼트
+                            let rushBonus = (diff !== 'EASY' && deckLength <= 12) ? 100 : 0; 
                             validPlays.push({ handIndex: i, cardObj: card, score: 200 - card.value + rushBonus });
                         }
                     }
@@ -381,24 +451,26 @@
                     roomData.p2_field[bestPlay.cardObj.color].push(aiHand.splice(bestPlay.handIndex, 1)[0]);
                     roomData.step = 'DRAW'; roomData.lastDiscardedColor = 'none';
                 } else {
-                    // 🧠 똑똑한 버리기 연산
+                    // 🧠 똑똑한 버리기 (난이도별 견제)
                     let discardOptions = [];
                     for(let i=0; i<aiHand.length; i++) {
                         const card = aiHand[i];
                         const oppField = roomData.p1_field[card.color].filter(c => c !== 0);
                         const myField = roomData.p2_field[card.color].filter(c => c !== 0);
                         
-                        let oppDanger = oppField.length > 0 ? 100 : 0; 
-                        
-                        // 상대가 이미 더 큰 숫자를 깔았으면 안전함 (위험도 0)
+                        let oppDanger = 0;
+                        if (diff === 'HARD') {
+                            oppDanger = oppField.length > 0 ? 1000 : (card.value >= 8 ? 50 : 0); // 절대 안버림
+                        } else if (diff === 'NORMAL') {
+                            oppDanger = oppField.length > 0 ? 100 : 0; 
+                        } // EASY는 위험도 0 고정
+
                         if (oppField.length > 0 && oppField[oppField.length - 1].value > card.value && card.value !== 0) {
                             oppDanger = 0; 
                         }
-                        // 내 손에 똥카드(낼 수 없는 카드)면 0순위로 버림
                         if (myField.length > 0 && myField[myField.length - 1].value > card.value && card.value !== 0) {
                             oppDanger -= 50; 
                         }
-
                         discardOptions.push({ handIndex: i, cardObj: card, danger: oppDanger + card.value });
                     }
                     discardOptions.sort((a,b) => a.danger - b.danger);
@@ -417,6 +489,15 @@
                         const topCard = pile[pile.length - 1];
                         const myField = roomData.p2_field[color].filter(c => c !== 0);
                         
+                        let cardValThreshold;
+                        if (diff === 'EASY') cardValThreshold = 11; // 튜토리얼은 버림판 줍지 않음
+                        else if (diff === 'HARD') {
+                            cardValThreshold = deckLength <= 10 ? 3 : 5;
+                            if (myScore > oppScore + 10) cardValThreshold = 0; // 이기고 있으면 버림판 아무거나 주워서 스톨링
+                        } else {
+                            cardValThreshold = deckLength <= 10 ? 4 : 6;
+                        }
+
                         if(myField.length > 0 || colorStats[color] >= currentThreshold - 3) {
                             let isLegal = true;
                             if(myField.length > 0) {
@@ -425,7 +506,6 @@
                                 if(topCard.value === 0 && lastMyCard.value > 0) isLegal = false;
                             }
                             
-                            let cardValThreshold = deckLength <= 10 ? 4 : 6; // 급하면 4짜리라도 주움
                             if (isLegal && (topCard.value >= cardValThreshold || topCard.value === 0)) {
                                 roomData.p2_hand.push(roomData.discardPiles[color].pop());
                                 grabbedFromDiscard = true; break;
@@ -539,7 +619,7 @@
             sessionStorage.setItem('lc_role_' + roomId, 'p1');
             let newRoom = {
                 matchId: Date.now(), 
-                p1_online: true, p2_online: false, isAIMode: false, gameState: 'WAITING',
+                p1_online: true, p2_online: false, isAIMode: false, aiDifficulty: 'NORMAL', gameState: 'WAITING',
                 turn: 'p1', step: 'PLAY', deck: createShuffledDeck(),
                 discardPiles: { red: [0], blue: [0], green: [0], yellow: [0], white: [0] },
                 p1_hand: [], p2_hand: [],
@@ -552,14 +632,7 @@
                 newRoom.p2_hand.push(newRoom.deck.pop());
             }
             roomRef.set(newRoom);
-            chatRef.push({ sender: 'system', text: `🏠 방이 생성되었습니다. 상대방을 초대하거나 AI 버튼을 누르세요.`, timestamp: Date.now() });
-        }
-
-        function startAIMode() {
-            if(!roomData) return;
-            roomData.p2_online = true; roomData.isAIMode = true; roomData.gameState = 'TURN_SELECT';
-            roomRef.set(roomData);
-            chatRef.push({ sender: 'system', text: "🤖 인공지능 보드가 등판했습니다. 방장님, 선공을 선택해주세요.", timestamp: Date.now() });
+            chatRef.push({ sender: 'system', text: `🏠 방이 생성되었습니다. 친구를 초대하거나 AI 버튼을 누르세요.`, timestamp: Date.now() });
         }
 
         function executeTurnSelect(choice) {
@@ -571,7 +644,7 @@
                 msg = `🪙 동전 던지기 결과: [${firstPlayerName}] 선공입니다!`;
             } else {
                 const firstPlayerName = finalTurn === 'p1' ? '방장' : '상대방';
-                msg = `🎯 방장의 선택: [${firstPlayerName}] 선공으로 게임을 시작합니다!`;
+                msg = `🎯 방장의 선택: [${firstPlayerName}] 선공으로 시작합니다!`;
             }
 
             roomData.turn = finalTurn;
@@ -583,12 +656,14 @@
         function executeServerReset() {
             const isAI = roomData ? roomData.isAIMode : false;
             const p2Online = roomData ? roomData.p2_online : false;
+            const aiDiff = roomData ? roomData.aiDifficulty : 'NORMAL';
             
             let newRoom = {
                 matchId: Date.now(), 
                 p1_online: true, 
                 p2_online: p2Online, 
                 isAIMode: isAI, 
+                aiDifficulty: aiDiff,
                 gameState: (p2Online || isAI) ? 'TURN_SELECT' : 'WAITING',
                 turn: 'p1', step: 'PLAY', deck: createShuffledDeck(),
                 discardPiles: { red: [0], blue: [0], green: [0], yellow: [0], white: [0] },
@@ -606,7 +681,7 @@
             selectedHandIndex = null;
             isAnimating = false;
             roomRef.set(newRoom);
-            chatRef.push({ sender: 'system', text: `🔄 방장이 게임을 리셋했습니다. 선공 선택 대기 중...`, timestamp: Date.now() });
+            chatRef.push({ sender: 'system', text: `🔄 게임을 리셋했습니다. 선공 선택 대기 중...`, timestamp: Date.now() });
         }
 
         function sendChatMessage() {
