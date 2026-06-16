@@ -3,11 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>로스트시티 익스트림 디럭스 (마스터 AI V8.1)</title>
+    <title>로스트시티 익스트림 디럭스 (얼티밋 V10)</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
     <style>
-        /* 🎨 풀스크린 고정 및 스케일링 배경 */
         body { 
             margin: 0; padding: 0; background: #0d1217; 
             display: flex; justify-content: center; align-items: center; 
@@ -23,7 +22,7 @@
             transform-origin: center center;
             box-shadow: 0 0 50px rgba(0,0,0,0.8);
             color: #fff; text-align: center;
-            flex-shrink: 0; /* 🚨 킹갓 중요: 창 크기가 작아져도 좌우 찌그러짐을 완전히 차단합니다 */
+            flex-shrink: 0; 
         }
         
         h1 { font-size: 24px; color: #f1c40f; text-shadow: 0 2px 10px rgba(241, 196, 15, 0.4); margin: 0 0 5px 0; }
@@ -83,11 +82,7 @@
             z-index: var(--card-idx); 
         }
 
-        .stacked-container:hover .stacked-card {
-            top: calc(15px + var(--card-idx) * 26px); 
-            box-shadow: 0 8px 16px rgba(0,0,0,0.6);
-        }
-
+        .stacked-container:hover .stacked-card { top: calc(15px + var(--card-idx) * 26px); box-shadow: 0 8px 16px rgba(0,0,0,0.6); }
         .stacked-container .stacked-card:hover { transform: translateY(-10px) scale(1.25) !important; box-shadow: 0 20px 40px rgba(0,0,0,1) !important; z-index: 1000 !important; }
         .stacked-container:has(.stacked-card:hover) .stacked-card:not(:hover):has(~ .stacked-card:hover) { transform: translateY(-35px) !important; }
         .stacked-container .stacked-card:hover ~ .stacked-card { transform: translateY(35px) !important; z-index: calc(500 - var(--card-idx)) !important; }
@@ -142,11 +137,43 @@
         .btn-play { background: #2ecc71; }
         .btn-discard { background: #e67e22; }
 
-        .result-overlay { display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 99999; justify-content: center; align-items: center; color: white; }
-        .result-box { background: #1e272e; padding: 40px; border-radius: 20px; border: 3px solid #f1c40f; max-width: 500px; width: 90%; }
-        .result-title { font-size: 36px; font-weight: bold; margin-bottom: 20px; color: #f1c40f; }
-        .result-scores { font-size: 20px; margin: 25px 0; line-height: 1.8; text-align: left; background: rgba(0,0,0,0.3); padding: 15px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.05); }
-        .btn-restart { background: #e74c3c; color: white; font-size: 18px; padding: 12px 35px; border-radius: 8px; cursor: pointer; border: none; font-weight: bold; }
+        @keyframes fadeOverlay {
+            from { background: rgba(0,0,0,0); backdrop-filter: blur(0px); }
+            to { background: rgba(6, 10, 15, 0.88); backdrop-filter: blur(15px); }
+        }
+        @keyframes popupBox {
+            from { transform: scale(0.85); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+        @keyframes pulseRestartBtn {
+            0% { box-shadow: 0 5px 15px rgba(0,0,0,0.4), 0 0 0px rgba(241,196,15,0); }
+            50% { box-shadow: 0 8px 25px rgba(0,0,0,0.6), 0 0 20px rgba(241,196,15,0.5); }
+            100% { box-shadow: 0 5px 15px rgba(0,0,0,0.4), 0 0 0px rgba(241,196,15,0); }
+        }
+
+        .result-overlay { 
+            display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; 
+            z-index: 99999; justify-content: center; align-items: center; color: white; 
+            animation: fadeOverlay 0.5s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+        }
+        .result-box { 
+            background: rgba(25, 35, 45, 0.95); padding: 50px 60px; border-radius: 28px; 
+            border: 3px solid #f1c40f; max-width: 550px; width: 90%; text-align: center;
+            box-shadow: 0 30px 70px rgba(0,0,0,0.9);
+            animation: popupBox 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+            box-sizing: border-box;
+        }
+        .result-title { font-size: 44px; font-weight: 900; margin-bottom: 25px; letter-spacing: -1px; text-shadow: 0 4px 15px rgba(0,0,0,0.7); }
+        .result-scores { font-size: 22px; margin: 30px 0; line-height: 2; text-align: left; background: rgba(10, 15, 20, 0.6); padding: 20px 25px; border-radius: 16px; border: 1px solid rgba(255,255,255,0.07); box-shadow: inset 0 0 20px rgba(0,0,0,0.4); }
+        .btn-restart { background: linear-gradient(135deg, #f1c40f 0%, #d4ac0d 100%); color: #0d1217; font-size: 20px; padding: 15px 45px; border-radius: 14px; cursor: pointer; border: 1px solid rgba(255,255,255,0.3); font-weight: 900; transition: transform 0.2s ease, background 0.2s; animation: pulseRestartBtn 2s infinite ease-in-out; }
+        .btn-restart:hover { transform: scale(1.05); background: linear-gradient(135deg, #fce136 0%, #f1c40f 100%); }
+
+        /* 선공 결정 모달 오버레이 */
+        .turn-overlay {
+            display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; 
+            z-index: 99998; background: rgba(0,0,0,0.85); justify-content: center; align-items: center; color: white;
+            animation: fadeOverlay 0.3s ease forwards;
+        }
     </style>
 </head>
 <body id="body-layout">
@@ -154,13 +181,13 @@
 <div id="game-wrapper">
     <div id="turn-toast" class="toast-notification">🔔 당신의 턴입니다!</div>
 
-    <h1>🌐 로스트시티 익스트림 디럭스 (마스터 AI V8.1)</h1>
+    <h1>🌐 로스트시티 익스트림 디럭스 (얼티밋 V10)</h1>
     
     <div class="info-panel">
         <div id="player-role">접속 중...</div>
         <div id="game-status" style="color: #f1c40f;">방을 생성하거나 참여하는 중입니다.</div>
         <div id="share-url" style="font-size: 11px; color: #bdc3c7; background: rgba(0,0,0,0.4); padding: 4px 8px; border-radius: 4px; display:none;"></div>
-        <button id="notif-toggle-btn" class="notif-toggle-btn" onclick="toggleNotification()">🔕 바탕화면 알림: 꺼짐</button>
+        <button id="notif-toggle-btn" class="notif-toggle-btn" onclick="toggleNotification()">🔕 바탕화면 알림(턴/채팅): 꺼짐</button>
         <button id="ai-start-btn" class="ai-mode-btn" onclick="startAIMode()">🤖 AI와 대전하기</button>
     </div>
 
@@ -224,11 +251,23 @@
         </div>
     </div>
 
+    <div id="turn-select-screen" class="turn-overlay">
+        <div class="result-box">
+            <div class="result-title" style="font-size: 28px; color: #fff;">🎲 선공 선택</div>
+            <div style="font-size: 16px; margin-bottom: 25px; color: #bdc3c7;">게임이 준비되었습니다! 방장님, 선공을 결정해 주세요.</div>
+            <div style="display: flex; gap: 10px; justify-content: center;">
+                <button class="btn btn-play" onclick="executeTurnSelect('p1')">🙋‍♂️ 내가 선공</button>
+                <button class="btn btn-discard" onclick="executeTurnSelect('p2')">🤖 상대가 선공</button>
+                <button class="btn" style="background: #9b59b6;" onclick="executeTurnSelect('random')">🎲 랜덤 선공</button>
+            </div>
+        </div>
+    </div>
+
     <div id="result-screen" class="result-overlay">
         <div class="result-box">
             <div id="final-winner-title" class="result-title">🎉 WINNER!</div>
-            <div id="final-score-details" class="result-scores">유저 1 점수 계산중...</div>
-            <button class="btn-restart" onclick="executeServerReset()">🔄 한 판 더하기 (방 초기화)</button>
+            <div id="final-score-details" class="result-scores">점수 계산중...</div>
+            <button class="btn-restart" onclick="executeServerReset()">🔄 한 판 더하기 (방 라이브 초기화)</button>
         </div>
     </div>
 </div>
@@ -289,14 +328,22 @@
         let isAnimating = false;
         let isNotifEnabled = false; 
         let previousTurnTracker = null;
+        let chatInitTime = Date.now();
 
         function toggleNotification() {
             isNotifEnabled = !isNotifEnabled;
             const btn = document.getElementById('notif-toggle-btn');
-            btn.innerText = isNotifEnabled ? '🔔 바탕화면 알림: 켜짐' : '🔕 바탕화면 알림: 꺼짐';
+            btn.innerText = isNotifEnabled ? '🔔 바탕화면 알림(턴/채팅): 켜짐' : '🔕 바탕화면 알림(턴/채팅): 꺼짐';
             btn.style.background = isNotifEnabled ? '#2ecc71' : '#7f8c8d';
+            
             if (isNotifEnabled && Notification.permission !== "granted") {
-                Notification.requestPermission();
+                Notification.requestPermission().then(permission => {
+                    if (permission === "granted") {
+                        new Notification("로스트시티 알림 설정", { body: "이제 내 차례가 되거나 상대가 채팅을 치면 알려드립니다!" });
+                    }
+                });
+            } else if (isNotifEnabled && Notification.permission === "granted") {
+                new Notification("로스트시티 알림", { body: "알림이 정상적으로 작동 중입니다." });
             }
         }
 
@@ -312,7 +359,15 @@
         function sendSystemNotification() {
             if (!isNotifEnabled) return;
             if (document.hidden && Notification.permission === "granted") {
-                const notification = new Notification("🗺️ 로스트시티", { body: "내 차례가 되었습니다! 게임 창으로 돌아오세요." });
+                const notification = new Notification("🗺️ 로스트시티 턴 알림", { body: "내 차례가 되었습니다! 게임 창으로 돌아오세요." });
+                notification.onclick = function() { window.focus(); this.close(); };
+            }
+        }
+
+        function sendMessageNotification(senderName, text) {
+            if (!isNotifEnabled) return;
+            if (document.hidden && Notification.permission === "granted") {
+                const notification = new Notification(`💬 ${senderName}의 메시지`, { body: text });
                 notification.onclick = function() { window.focus(); this.close(); };
             }
         }
@@ -332,8 +387,8 @@
                         myRole = 'p2';
                         sessionStorage.setItem('lc_role_' + roomId, 'p2');
                         roomRef.child('p2_online').set(true);
-                        roomRef.child('gameState').set('PLAYING');
-                        chatRef.push({ sender: 'system', text: `👤 상대방(Player 2)이 접속했습니다! 게임을 시작합니다.` });
+                        roomRef.child('gameState').set('TURN_SELECT');
+                        chatRef.push({ sender: 'system', text: `👤 상대방(Player 2)이 접속했습니다! 방장이 선공을 선택합니다.`, timestamp: Date.now() });
                     } else {
                         roomRef.child(myRole + '_online').set(true);
                     }
@@ -375,7 +430,12 @@
             });
 
             chatRef.limitToLast(20).on('child_added', (snapshot) => {
-                appendChatMessageUI(snapshot.val());
+                const data = snapshot.val();
+                appendChatMessageUI(data);
+                if (data.timestamp > chatInitTime && data.sender !== myRole && data.sender !== 'system') {
+                    const senderName = data.sender === 'p1' ? 'Player 1' : 'Player 2';
+                    sendMessageNotification(senderName, data.text);
+                }
             });
         });
 
@@ -563,11 +623,10 @@
         function setupNewGameInit() {
             myRole = 'p1';
             sessionStorage.setItem('lc_role_' + roomId, 'p1');
-            const randomFirstTurn = Math.random() < 0.5 ? 'p1' : 'p2';
             let newRoom = {
                 matchId: Date.now(), 
                 p1_online: true, p2_online: false, isAIMode: false, gameState: 'WAITING',
-                turn: randomFirstTurn, step: 'PLAY', deck: createShuffledDeck(),
+                turn: 'p1', step: 'PLAY', deck: createShuffledDeck(),
                 discardPiles: { red: [0], blue: [0], green: [0], yellow: [0], white: [0] },
                 p1_hand: [], p2_hand: [],
                 p1_field: { red: [0], blue: [0], green: [0], yellow: [0], white: [0] },
@@ -579,25 +638,45 @@
                 newRoom.p2_hand.push(newRoom.deck.pop());
             }
             roomRef.set(newRoom);
-            
-            setTimeout(() => {
-                const firstPlayerName = randomFirstTurn === 'p1' ? '당신(방장)' : '상대방(참가자/AI)';
-                chatRef.push({ sender: 'system', text: `🪙 동전 던지기 결과: [${firstPlayerName}] 선공입니다!` });
-            }, 800);
+            chatRef.push({ sender: 'system', text: `🏠 방이 생성되었습니다. 상대방을 초대하거나 AI 버튼을 누르세요.`, timestamp: Date.now() });
+        }
+
+        function startAIMode() {
+            if(!roomData) return;
+            roomData.p2_online = true; roomData.isAIMode = true; roomData.gameState = 'TURN_SELECT';
+            roomRef.set(roomData);
+            chatRef.push({ sender: 'system', text: "🤖 인공지능 보드가 등판했습니다. 방장님, 선공을 선택해주세요.", timestamp: Date.now() });
+        }
+
+        function executeTurnSelect(choice) {
+            let finalTurn = choice;
+            let msg = "";
+            if (choice === 'random') {
+                finalTurn = Math.random() < 0.5 ? 'p1' : 'p2';
+                const firstPlayerName = finalTurn === 'p1' ? '당신(방장)' : '상대방(참가자/AI)';
+                msg = `🪙 동전 던지기 결과: [${firstPlayerName}] 선공입니다!`;
+            } else {
+                const firstPlayerName = finalTurn === 'p1' ? '방장' : '상대방';
+                msg = `🎯 방장의 선택: [${firstPlayerName}] 선공으로 게임을 시작합니다!`;
+            }
+
+            roomData.turn = finalTurn;
+            roomData.gameState = 'PLAYING';
+            roomRef.set(roomData);
+            chatRef.push({ sender: 'system', text: msg, timestamp: Date.now() });
         }
 
         function executeServerReset() {
             const isAI = roomData ? roomData.isAIMode : false;
             const p2Online = roomData ? roomData.p2_online : false;
-            const randomFirstTurn = Math.random() < 0.5 ? 'p1' : 'p2';
             
             let newRoom = {
                 matchId: Date.now(), 
                 p1_online: true, 
                 p2_online: p2Online, 
                 isAIMode: isAI, 
-                gameState: (p2Online || isAI) ? 'PLAYING' : 'WAITING',
-                turn: randomFirstTurn, step: 'PLAY', deck: createShuffledDeck(),
+                gameState: (p2Online || isAI) ? 'TURN_SELECT' : 'WAITING',
+                turn: 'p1', step: 'PLAY', deck: createShuffledDeck(),
                 discardPiles: { red: [0], blue: [0], green: [0], yellow: [0], white: [0] },
                 p1_hand: [], p2_hand: [],
                 p1_field: { red: [0], blue: [0], green: [0], yellow: [0], white: [0] },
@@ -613,18 +692,14 @@
             selectedHandIndex = null;
             isAnimating = false;
             roomRef.set(newRoom);
-            
-            setTimeout(() => {
-                const firstPlayerName = randomFirstTurn === 'p1' ? 'Player 1' : 'Player 2';
-                chatRef.push({ sender: 'system', text: `🔄 게임이 새롭게 세팅되었습니다. 🪙 [${firstPlayerName}] 선공입니다!` });
-            }, 500);
+            chatRef.push({ sender: 'system', text: `🔄 방장이 게임을 리셋했습니다. 선공 선택 대기 중...`, timestamp: Date.now() });
         }
 
         function sendChatMessage() {
             const inputEl = document.getElementById('chat-input');
             const messageText = inputEl.value.trim();
             if(!messageText) return;
-            chatRef.push({ sender: myRole, text: messageText });
+            chatRef.push({ sender: myRole, text: messageText, timestamp: Date.now() });
             inputEl.value = '';
         }
 
@@ -639,13 +714,6 @@
             }
             chatMessagesDiv.appendChild(msgEl);
             chatMessagesDiv.scrollTop = chatMessagesDiv.scrollHeight;
-        }
-
-        function startAIMode() {
-            if(!roomData) return;
-            roomData.p2_online = true; roomData.isAIMode = true; roomData.gameState = 'PLAYING';
-            roomRef.set(roomData);
-            chatRef.push({ sender: 'system', text: "🤖 인공지능 보드가 대전 상대로 등판했습니다." });
         }
 
         function createShuffledDeck() {
@@ -680,6 +748,7 @@
             const statusText = document.getElementById('game-status');
             const deckBtn = document.getElementById('deck-draw-btn');
             const actionPanel = document.getElementById('action-panel');
+            const turnSelectScreen = document.getElementById('turn-select-screen');
             
             document.getElementById('deck-count').innerText = roomData.deck ? roomData.deck.length : 0;
             
@@ -691,37 +760,58 @@
 
             if (roomData.gameState === 'WAITING') {
                 statusText.innerText = "⏳ 친구를 기다리는 중입니다... 초대 링크를 복사해서 카톡으로 보내세요!";
-                tableDiv.className = "game-table waiting"; return;
+                tableDiv.className = "game-table waiting";
+                turnSelectScreen.style.display = 'none';
+                return;
             }
+
+            if (roomData.gameState === 'TURN_SELECT') {
+                tableDiv.className = "game-table waiting";
+                if (myRole === 'p1') {
+                    turnSelectScreen.style.display = 'flex';
+                    statusText.innerText = "⏳ 선공을 선택해주세요.";
+                } else {
+                    turnSelectScreen.style.display = 'none';
+                    statusText.innerText = "⏳ 방장이 선공을 결정하고 있습니다...";
+                }
+                deckBtn.disabled = true; actionPanel.style.display = 'none';
+            } else {
+                turnSelectScreen.style.display = 'none';
+            }
+
             if (roomData.gameState === 'GAME_OVER') {
                 statusText.innerText = "🏁 게임이 종료되었습니다!"; tableDiv.className = "game-table waiting"; showFinalScores(); return;
             }
 
-            tableDiv.className = "game-table active";
-            const isMyTurn = (roomData.turn === myRole);
+            if (roomData.gameState === 'PLAYING') {
+                tableDiv.className = "game-table active";
+                const isMyTurn = (roomData.turn === myRole);
 
-            if (isMyTurn && previousTurnTracker !== myRole && previousTurnTracker !== null) {
-                showTurnToastPopup(); 
-                sendSystemNotification(); 
-            }
-            previousTurnTracker = roomData.turn;
-
-            if (isMyTurn) {
-                if (roomData.step === 'PLAY') {
-                    statusText.innerText = "🟢 당신의 턴: 카드를 선택한 후 내려놓거나 버리세요.";
-                    deckBtn.disabled = true; actionPanel.style.display = selectedHandIndex !== null ? 'flex' : 'none';
-                } else {
-                    statusText.innerText = "🔵 당신의 턴: 카드를 채워야 합니다! 덱을 누르거나 버림판 카드를 가져오세요.";
-                    deckBtn.disabled = false; actionPanel.style.display = 'none';
+                if (isMyTurn && previousTurnTracker !== myRole && previousTurnTracker !== null) {
+                    showTurnToastPopup(); 
+                    sendSystemNotification(); 
                 }
-            } else {
-                statusText.innerText = roomData.isAIMode ? "🤖 AI가 고심하며 연산하고 있습니다..." : "🔴 상대방 턴: 상대방이 플레이하는 중입니다. 기다려주세요...";
-                deckBtn.disabled = true; actionPanel.style.display = 'none'; selectedHandIndex = null;
+                previousTurnTracker = roomData.turn;
+
+                if (isMyTurn) {
+                    if (roomData.step === 'PLAY') {
+                        statusText.innerText = "🟢 당신의 턴: 카드를 선택한 후 내려놓거나 버리세요.";
+                        deckBtn.disabled = true; actionPanel.style.display = selectedHandIndex !== null ? 'flex' : 'none';
+                    } else {
+                        statusText.innerText = "🔵 당신의 턴: 카드를 채워야 합니다! 덱을 누르거나 버림판 카드를 가져오세요.";
+                        deckBtn.disabled = false; actionPanel.style.display = 'none';
+                    }
+                } else {
+                    statusText.innerText = roomData.isAIMode ? "🤖 AI가 고심하며 연산하고 있습니다..." : "🔴 상대방 턴: 상대방이 플레이하는 중입니다. 기다려주세요...";
+                    deckBtn.disabled = true; actionPanel.style.display = 'none'; selectedHandIndex = null;
+                }
             }
+
+            const isPlayable = (roomData.gameState === 'PLAYING' && roomData.turn === myRole && roomData.step === 'PLAY');
 
             const myHand = roomData[`${myRole}_hand`] || [];
             const handDiv = document.getElementById('my-hand'); handDiv.innerHTML = '';
-            myHand.forEach((card, index) => { handDiv.appendChild(createCardElement(card, index, isMyTurn && roomData.step === 'PLAY', "my-card")); });
+            myHand.forEach((card, index) => { handDiv.appendChild(createCardElement(card, index, isPlayable, "my-card")); });
 
             colors.forEach(color => {
                 const myFieldContainer = document.getElementById(`container-my-${color}`); 
@@ -777,9 +867,9 @@
                     cardEl.style.setProperty('--card-idx', index);
                     
                     if (index === realCards.length - 1) {
-                        document.getElementById(`title-opp-${color}`).innerText = `${adventureData[color].name} (${calcLineScore(roomData[`${oppRole}_field`][color])}점)`;
+                        cardEl.id = `discard-top-${color}`;
                     }
-                    if(isMyTurn && roomData.step === 'DRAW') {
+                    if(roomData.gameState === 'PLAYING' && roomData.turn === myRole && roomData.step === 'DRAW') {
                         cardEl.onclick = () => animateDiscardDraw(color);
                         cardEl.style.cursor = 'pointer';
                     } else {
@@ -939,18 +1029,39 @@
         function showFinalScores() {
             const myScore = calcPlayerScore(myRole); const oppRole = myRole === 'p1' ? 'p2' : 'p1'; const oppScore = calcPlayerScore(oppRole);
             const winnerTitleEl = document.getElementById('final-winner-title'); const scoreDetailsEl = document.getElementById('final-score-details');
+            const resultBox = document.querySelector('.result-box');
 
-            if (myScore === oppScore) { winnerTitleEl.innerText = "🤝 무승부 (DRAW)"; winnerTitleEl.style.color = "#bdc3c7"; } 
-            else if (myScore > oppScore) { winnerTitleEl.innerText = "🎉 당신의 승리 (VICTORY)!"; winnerTitleEl.style.color = "#2ecc71"; } 
-            else { winnerTitleEl.innerText = roomData.isAIMode ? "🤖 AI봇의 승리! 패배했습니다..." : "😭 당신의 패배 (DEFEAT)..."; winnerTitleEl.style.color = "#e74c3c"; }
+            if (myScore === oppScore) { 
+                winnerTitleEl.innerText = "🤝 무승부 (DRAW MATCH)"; 
+                winnerTitleEl.style.color = "#bdc3c7";
+                winnerTitleEl.style.textShadow = "0 0 20px rgba(189,195,199,0.6)";
+                resultBox.style.borderColor = "#bdc3c7";
+                resultBox.style.boxShadow = "0 30px 70px rgba(0,0,0,0.9), 0 0 40px rgba(189,195,199,0.3)";
+            } 
+            else if (myScore > oppScore) { 
+                winnerTitleEl.innerText = "🎉 승리했습니다 (VICTORY)!"; 
+                winnerTitleEl.style.color = "#2ecc71";
+                winnerTitleEl.style.textShadow = "0 0 25px rgba(46,204,113,0.8)";
+                resultBox.style.borderColor = "#2ecc71";
+                resultBox.style.boxShadow = "0 30px 70px rgba(0,0,0,0.9), 0 0 45px rgba(46,204,113,0.5)";
+            } 
+            else { 
+                winnerTitleEl.innerText = roomData.isAIMode ? "🤖 패배했습니다 (DEFEAT)" : "😭 패배했습니다 (DEFEAT)"; 
+                winnerTitleEl.style.color = "#e74c3c";
+                winnerTitleEl.style.textShadow = "0 0 25px rgba(231,76,60,0.8)";
+                resultBox.style.borderColor = "#e74c3c";
+                resultBox.style.boxShadow = "0 30px 70px rgba(0,0,0,0.9), 0 0 45px rgba(231,76,60,0.5)";
+            }
 
             scoreDetailsEl.innerHTML = `
-                <div style="font-size: 22px; text-align:center; font-weight:bold; border-bottom: 1px solid #7f8c8d; padding-bottom:10px; margin-bottom:10px;">🏆 최종 스코어 🏆</div>
-                <div style="display:flex; justify-content: space-between; margin-bottom: 8px;">
-                    <span>🥇 나의 최종 점수:</span> <span style="font-weight:bold; color:#2ecc71;">${myScore} 점</span>
+                <div style="font-size: 24px; text-align:center; font-weight:900; color:#f1c40f; border-bottom: 2px solid rgba(255,255,255,0.1); padding-bottom:12px; margin-bottom:15px; text-shadow:0 2px 4px rgba(0,0,0,0.5);">🏆 MATCH REPORT 🏆</div>
+                <div style="display:flex; justify-content: space-between; margin-bottom: 12px; align-items:center;">
+                    <span style="font-weight:bold; color:#fff;">🥇 나의 최종 스코어 :</span> 
+                    <span style="font-weight:900; font-size:26px; color:#2ecc71; text-shadow:0 0 10px rgba(46,204,113,0.3);">${myScore} 점</span>
                 </div>
-                <div style="display:flex; justify-content: space-between;">
-                    <span>🤖 상대방 점수:</span> <span style="font-weight:bold; color:#e74c3c;">${oppScore} 점</span>
+                <div style="display:flex; justify-content: space-between; align-items:center;">
+                    <span style="font-weight:bold; color:#95a5a6;">🤖 대전 상대 스코어 :</span> 
+                    <span style="font-weight:900; font-size:26px; color:#e74c3c; text-shadow:0 0 10px rgba(231,76,60,0.3);">${oppScore} 점</span>
                 </div>
             `;
             document.getElementById('result-screen').style.display = 'flex';
