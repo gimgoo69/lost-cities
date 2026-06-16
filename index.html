@@ -3,11 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>로스트시티 익스트림 디럭스 (최종 완성판 V6)</title>
+    <title>로스트시티 익스트림 디럭스 (마스터 AI V8)</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
     <style>
-        /* 🎨 풀스크린 고정 및 스케일링 배경 */
         body { 
             margin: 0; padding: 0; background: #0d1217; 
             display: flex; justify-content: center; align-items: center; 
@@ -69,47 +68,27 @@
         .col-yellow { border-color: rgba(241, 196, 15, 0.4); }
         .col-white { border-color: rgba(236, 240, 241, 0.3); }
 
-        .column-header { 
-            pointer-events: none; 
-            min-height: 60px; margin-bottom: 2px; position: relative; z-index: 10; 
-            border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 4px; 
-        }
+        .column-header { pointer-events: none; min-height: 60px; margin-bottom: 2px; position: relative; z-index: 10; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 4px; }
         .column h4 { margin: 0; font-size: 16px; color: #f1c40f; font-weight: 900; text-shadow: 0 2px 5px rgba(0,0,0,0.8); }
         .history-badge { display: inline-block; font-size: 13px; color: #fff; background: rgba(0,0,0,0.7); padding: 3px 8px; border-radius: 5px; margin-top: 5px; font-weight: bold; border: 1px solid rgba(255,255,255,0.1); }
         
-        .stacked-container { 
-            position: relative; width: 100%; flex: 1; min-height: 105px; 
-            display: flex; justify-content: center; z-index: 20;
-        }
+        .stacked-container { position: relative; width: 100%; flex: 1; min-height: 105px; display: flex; justify-content: center; z-index: 20; }
         
-        /* 🚨 1. 평소 상태 튜닝: 오프셋을 없애고 0px부터 오밀조밀하게 시작하여 정중앙 배치 */
         .stacked-card { 
-            position: absolute; 
-            left: 50%; margin-left: -29px; 
+            position: absolute; left: 50%; margin-left: -29px; 
             top: calc(var(--card-idx) * 4px); 
             transition: top 0.3s ease, transform 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.2s ease;
             z-index: var(--card-idx); 
         }
 
-        /* 🚨 호버 상태 튜닝: 마우스를 대면 내역칸 침범을 막기 위해 15px 내려앉으며 부채꼴 확장 */
         .stacked-container:hover .stacked-card {
             top: calc(15px + var(--card-idx) * 26px); 
             box-shadow: 0 8px 16px rgba(0,0,0,0.6);
         }
 
-        /* 2. 하스스톤급 '모세의 기적 + 폭포수 Z-index' 호버 구조 */
-        .stacked-container .stacked-card:hover {
-            transform: translateY(-10px) scale(1.25) !important;
-            box-shadow: 0 20px 40px rgba(0,0,0,1) !important;
-            z-index: 1000 !important;
-        }
-        .stacked-container:has(.stacked-card:hover) .stacked-card:not(:hover):has(~ .stacked-card:hover) {
-            transform: translateY(-35px) !important;
-        }
-        .stacked-container .stacked-card:hover ~ .stacked-card {
-            transform: translateY(35px) !important;
-            z-index: calc(500 - var(--card-idx)) !important; 
-        }
+        .stacked-container .stacked-card:hover { transform: translateY(-10px) scale(1.25) !important; box-shadow: 0 20px 40px rgba(0,0,0,1) !important; z-index: 1000 !important; }
+        .stacked-container:has(.stacked-card:hover) .stacked-card:not(:hover):has(~ .stacked-card:hover) { transform: translateY(-35px) !important; }
+        .stacked-container .stacked-card:hover ~ .stacked-card { transform: translateY(35px) !important; z-index: calc(500 - var(--card-idx)) !important; }
 
         .card-list { display: flex; gap: 6px; justify-content: center; flex-wrap: wrap; min-height: 100px; padding-bottom: 10px; align-items: center; position: relative; }
 
@@ -155,17 +134,7 @@
         .notif-toggle-btn { background: #2ecc71; color: white; border: none; padding: 6px 12px; font-size: 12px; border-radius: 6px; cursor: pointer; font-weight: bold; transition: 0.2s; box-shadow: inset 0 0 5px rgba(0,0,0,0.2); }
         .ai-mode-btn { background: #e74c3c; color: white; border: none; padding: 6px 12px; font-size: 12px; border-radius: 6px; cursor: pointer; font-weight: bold; }
 
-        .action-panel { 
-            display: none; gap: 15px; justify-content: center; 
-            position: absolute; 
-            top: 50%; left: 50%; transform: translate(-50%, -50%); 
-            background: rgba(20, 30, 40, 0.95);
-            padding: 20px 40px;
-            border-radius: 15px;
-            border: 2px solid #f1c40f;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.9), 0 0 30px rgba(241,196,15,0.4);
-            z-index: 9999;
-        }
+        .action-panel { display: none; gap: 15px; justify-content: center; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(20, 30, 40, 0.95); padding: 20px 40px; border-radius: 15px; border: 2px solid #f1c40f; box-shadow: 0 10px 40px rgba(0,0,0,0.9), 0 0 30px rgba(241,196,15,0.4); z-index: 9999; }
         .btn { padding: 10px 25px; font-size: 14px; font-weight: bold; border-radius: 8px; cursor: pointer; border: none; color: white; transition: 0.2s; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
         .btn:hover { transform: translateY(-2px); }
         .btn-play { background: #2ecc71; }
@@ -181,10 +150,9 @@
 <body id="body-layout">
 
 <div id="game-wrapper">
-
     <div id="turn-toast" class="toast-notification">🔔 당신의 턴입니다!</div>
 
-    <h1>🌐 로스트시티 익스트림 디럭스 (최종 완성판 V6)</h1>
+    <h1>🌐 로스트시티 익스트림 디럭스 (마스터 AI V8)</h1>
     
     <div class="info-panel">
         <div id="player-role">접속 중...</div>
@@ -261,7 +229,6 @@
             <button class="btn-restart" onclick="executeServerReset()">🔄 한 판 더하기 (방 초기화)</button>
         </div>
     </div>
-
 </div>
 
     <script>
@@ -289,9 +256,7 @@
             };
         }
 
-        const firebaseConfig = {
-            databaseURL: "https://lostcities-572f9-default-rtdb.firebaseio.com/"
-        };
+        const firebaseConfig = { databaseURL: "https://lostcities-572f9-default-rtdb.firebaseio.com/" };
         firebase.initializeApp(firebaseConfig);
         const database = firebase.database();
 
@@ -307,11 +272,8 @@
         const colors = ['red', 'blue', 'green', 'yellow', 'white'];
 
         const adventureData = {
-            red:    { name: "🔴 화산 동굴" },
-            blue:   { name: "🔵 심해 유적" },
-            green:  { name: "🟢 원시림" },
-            yellow: { name: "🟡 황금 사막" },
-            white:  { name: "⚪ 설산 빙벽" }
+            red: { name: "🔴 화산 동굴" }, blue: { name: "🔵 심해 유적" }, green: { name: "🟢 원시림" },
+            yellow: { name: "🟡 황금 사막" }, white: { name: "⚪ 설산 빙벽" }
         };
 
         function getCustomCardImage(color, label) {
@@ -319,7 +281,7 @@
             return `images/${color} ${fileLabel}.png`; 
         }
 
-        let myRole = null;
+        let myRole = sessionStorage.getItem('lc_role_' + roomId); 
         let roomData = null;
         let selectedHandIndex = null;
         let isAnimating = false;
@@ -331,17 +293,8 @@
             const btn = document.getElementById('notif-toggle-btn');
             btn.innerText = isNotifEnabled ? '🔔 바탕화면 알림: 켜짐' : '🔕 바탕화면 알림: 꺼짐';
             btn.style.background = isNotifEnabled ? '#2ecc71' : '#7f8c8d';
-
-            if (isNotifEnabled) {
-                if (Notification.permission !== "granted") {
-                    Notification.requestPermission().then(permission => {
-                        if (permission === "granted") {
-                            new Notification("로스트시티 알림 설정", { body: "알림 설정이 완료되었습니다! 턴이 오면 알려드릴게요." });
-                        }
-                    });
-                } else {
-                    new Notification("로스트시티 알림 테스트", { body: "알림이 정상적으로 작동 중입니다." });
-                }
+            if (isNotifEnabled && Notification.permission !== "granted") {
+                Notification.requestPermission();
             }
         }
 
@@ -364,16 +317,24 @@
 
         roomRef.once('value').then((snapshot) => {
             let currentData = snapshot.val();
-            if (currentData === null || currentData.gameState === 'RESETTING') {
-                setupNewGameInit();
+            
+            if (currentData === null) {
+                setupNewGameInit(); 
             } else {
                 if (currentData.isAIMode) {
-                    myRole = 'p1';
+                    myRole = 'p1'; 
+                    sessionStorage.setItem('lc_role_' + roomId, 'p1');
                     roomRef.child('p1_online').set(true);
                 } else {
-                    myRole = 'p2';
-                    roomRef.child('p2_online').set(true);
-                    roomRef.child('gameState').set('PLAYING');
+                    if (!myRole) {
+                        myRole = 'p2';
+                        sessionStorage.setItem('lc_role_' + roomId, 'p2');
+                        roomRef.child('p2_online').set(true);
+                        roomRef.child('gameState').set('PLAYING');
+                        chatRef.push({ sender: 'system', text: `👤 상대방(Player 2)이 접속했습니다! 게임을 시작합니다.` });
+                    } else {
+                        roomRef.child(myRole + '_online').set(true);
+                    }
                 }
             }
 
@@ -385,21 +346,29 @@
             roomRef.on('value', (snap) => {
                 const incomingData = snap.val();
                 if (!incomingData) return;
-                if (incomingData.gameState === 'RESETTING') { location.reload(); return; }
-
+                
                 let motionTriggered = false;
                 if (roomData && incomingData && !isAnimating) {
-                    const oppRole = myRole === 'p1' ? 'p2' : 'p1';
-                    if (roomData.turn === oppRole && roomData.step === 'PLAY' && incomingData.step === 'DRAW') {
-                        motionTriggered = triggerOpponentActionMotion(roomData, incomingData, oppRole);
-                    }
-                    else if (roomData.turn === oppRole && roomData.step === 'DRAW' && incomingData.turn === myRole) {
-                        motionTriggered = triggerOpponentDrawMotion(roomData, incomingData, oppRole);
+                    if (roomData.matchId && incomingData.matchId && roomData.matchId !== incomingData.matchId) {
+                        document.getElementById('result-screen').style.display = 'none';
+                        selectedHandIndex = null;
+                        isAnimating = false;
+                    } else {
+                        const oppRole = myRole === 'p1' ? 'p2' : 'p1';
+                        if (roomData.turn === oppRole && roomData.step === 'PLAY' && incomingData.step === 'DRAW') {
+                            motionTriggered = triggerOpponentActionMotion(roomData, incomingData, oppRole);
+                        }
+                        else if (roomData.turn === oppRole && roomData.step === 'DRAW' && incomingData.turn === myRole) {
+                            motionTriggered = triggerOpponentDrawMotion(roomData, incomingData, oppRole);
+                        }
                     }
                 }
+                
                 roomData = incomingData;
+                
                 if (!isAnimating && !motionTriggered) {
-                    updateGameUI(); checkAndRunAI();
+                    updateGameUI(); 
+                    checkAndRunAI();
                 }
             });
 
@@ -408,9 +377,100 @@
             });
         });
 
+        // 🚨 V8 업그레이드 마스터 AI 로직
         function checkAndRunAI() {
             if (myRole === 'p1' && roomData && roomData.isAIMode && roomData.gameState === 'PLAYING' && roomData.turn === 'p2') {
-                setTimeout(runAIIntelligence, 500);
+                setTimeout(runAIIntelligence, 600);
+            }
+        }
+
+        function runAIIntelligence() {
+            if(roomData.turn !== 'p2' || roomData.gameState !== 'PLAYING') return;
+            const aiHand = roomData.p2_hand || [];
+            if(aiHand.length === 0) return;
+
+            // AI 색상별 상황 분석 (투자카드는 가치 5로 산정)
+            let colorStats = { red:0, blue:0, green:0, yellow:0, white:0 };
+            aiHand.forEach(c => colorStats[c.color] += Math.max(c.value, 5));
+
+            if(roomData.step === 'PLAY') {
+                let validPlays = [];
+                for(let i=0; i<aiHand.length; i++) {
+                    const card = aiHand[i];
+                    const myField = roomData.p2_field[card.color].filter(c => c !== 0);
+                    let isLegal = true;
+                    if(myField.length > 0) {
+                        const lastC = myField[myField.length - 1];
+                        if(card.value < lastC.value) isLegal = false;
+                        if(card.value === 0 && lastC.value > 0) isLegal = false;
+                    }
+
+                    if(isLegal) {
+                        if (myField.length === 0) {
+                            // 맨땅에 새 탐험 시작: 손패 점수가 최소 15점 이상일 때만 시작하여 마이너스 방지
+                            if (colorStats[card.color] >= 15) { 
+                                validPlays.push({ handIndex: i, cardObj: card, score: card.value === 0 ? 100 : 50 - card.value });
+                            }
+                        } else {
+                            // 이미 시작한 라인: 제일 작은 숫자부터 안전하게 내기
+                            validPlays.push({ handIndex: i, cardObj: card, score: 200 - card.value });
+                        }
+                    }
+                }
+
+                if(validPlays.length > 0) {
+                    validPlays.sort((a,b) => b.score - a.score);
+                    const bestPlay = validPlays[0];
+                    roomData.p2_field[bestPlay.cardObj.color].push(aiHand.splice(bestPlay.handIndex, 1)[0]);
+                    roomData.step = 'DRAW'; roomData.lastDiscardedColor = 'none';
+                } else {
+                    // 낼 게 없을 때: 상대가 키우고 있는 색상은 피해서 버리기 (견제)
+                    let discardOptions = [];
+                    for(let i=0; i<aiHand.length; i++) {
+                        const card = aiHand[i];
+                        const oppField = roomData.p1_field[card.color].filter(c => c !== 0);
+                        let oppDanger = oppField.length > 0 ? 100 : 0; 
+                        discardOptions.push({ handIndex: i, cardObj: card, danger: oppDanger + card.value });
+                    }
+                    discardOptions.sort((a,b) => a.danger - b.danger);
+                    const discardedCard = aiHand.splice(discardOptions[0].handIndex, 1)[0];
+                    roomData.discardPiles[discardedCard.color].push(discardedCard);
+                    roomData.step = 'DRAW'; roomData.lastDiscardedColor = discardedCard.color;
+                }
+                roomRef.set(roomData);
+            }
+            else if(roomData.step === 'DRAW') {
+                let grabbedFromDiscard = false;
+                // 버림판 줍줍: 내가 낼 수 있고, 가치가 6 이상이거나 투자카드면 훔쳐오기
+                for(let i=0; i<colors.length; i++) {
+                    const color = colors[i];
+                    const pile = roomData.discardPiles[color].filter(c => c !== 0);
+                    if(pile.length > 0 && color !== roomData.lastDiscardedColor) {
+                        const topCard = pile[pile.length - 1];
+                        const myField = roomData.p2_field[color].filter(c => c !== 0);
+                        
+                        if(myField.length > 0 || colorStats[color] >= 15) {
+                            let isLegal = true;
+                            if(myField.length > 0) {
+                                const lastMyCard = myField[myField.length - 1];
+                                if(topCard.value < lastMyCard.value) isLegal = false;
+                                if(topCard.value === 0 && lastMyCard.value > 0) isLegal = false;
+                            }
+                            if (isLegal && (topCard.value >= 6 || topCard.value === 0)) {
+                                roomData.p2_hand.push(roomData.discardPiles[color].pop());
+                                grabbedFromDiscard = true; break;
+                            }
+                        }
+                    }
+                }
+                if(!grabbedFromDiscard) { 
+                    if (roomData.deck && roomData.deck.length > 0) {
+                        roomData.p2_hand.push(roomData.deck.pop()); 
+                    }
+                }
+                if (!roomData.deck || roomData.deck.length === 0) { roomData.gameState = 'GAME_OVER'; } 
+                else { roomData.turn = 'p1'; roomData.step = 'PLAY'; }
+                roomRef.set(roomData);
             }
         }
 
@@ -506,8 +566,10 @@
 
         function setupNewGameInit() {
             myRole = 'p1';
+            sessionStorage.setItem('lc_role_' + roomId, 'p1');
             const randomFirstTurn = Math.random() < 0.5 ? 'p1' : 'p2';
             let newRoom = {
+                matchId: Date.now(), 
                 p1_online: true, p2_online: false, isAIMode: false, gameState: 'WAITING',
                 turn: randomFirstTurn, step: 'PLAY', deck: createShuffledDeck(),
                 discardPiles: { red: [0], blue: [0], green: [0], yellow: [0], white: [0] },
@@ -521,8 +583,7 @@
                 newRoom.p2_hand.push(newRoom.deck.pop());
             }
             roomRef.set(newRoom);
-            document.getElementById('ai-start-btn').style.display = 'inline-block';
-
+            
             setTimeout(() => {
                 const firstPlayerName = randomFirstTurn === 'p1' ? '당신(방장)' : '상대방(참가자/AI)';
                 chatRef.push({ sender: 'system', text: `🪙 동전 던지기 결과: [${firstPlayerName}] 선공입니다!` });
@@ -530,7 +591,38 @@
         }
 
         function executeServerReset() {
-            roomRef.set({ gameState: 'RESETTING' }).then(() => { setupNewGameInit(); });
+            const isAI = roomData ? roomData.isAIMode : false;
+            const p2Online = roomData ? roomData.p2_online : false;
+            const randomFirstTurn = Math.random() < 0.5 ? 'p1' : 'p2';
+            
+            let newRoom = {
+                matchId: Date.now(), 
+                p1_online: true, 
+                p2_online: p2Online, 
+                isAIMode: isAI, 
+                gameState: (p2Online || isAI) ? 'PLAYING' : 'WAITING',
+                turn: randomFirstTurn, step: 'PLAY', deck: createShuffledDeck(),
+                discardPiles: { red: [0], blue: [0], green: [0], yellow: [0], white: [0] },
+                p1_hand: [], p2_hand: [],
+                p1_field: { red: [0], blue: [0], green: [0], yellow: [0], white: [0] },
+                p2_field: { red: [0], blue: [0], green: [0], yellow: [0], white: [0] },
+                lastDiscardedColor: 'none'
+            };
+            for(let i=0; i<8; i++) {
+                newRoom.p1_hand.push(newRoom.deck.pop());
+                newRoom.p2_hand.push(newRoom.deck.pop());
+            }
+            
+            document.getElementById('result-screen').style.display = 'none';
+            selectedHandIndex = null;
+            isAnimating = false;
+
+            roomRef.set(newRoom);
+            
+            setTimeout(() => {
+                const firstPlayerName = randomFirstTurn === 'p1' ? 'Player 1' : 'Player 2';
+                chatRef.push({ sender: 'system', text: `🔄 게임이 새롭게 세팅되었습니다. 🪙 [${firstPlayerName}] 선공입니다!` });
+            }, 500);
         }
 
         function sendChatMessage() {
@@ -557,7 +649,6 @@
         function startAIMode() {
             if(!roomData) return;
             roomData.p2_online = true; roomData.isAIMode = true; roomData.gameState = 'PLAYING';
-            document.getElementById('ai-start-btn').style.display = 'none';
             roomRef.set(roomData);
             chatRef.push({ sender: 'system', text: "🤖 인공지능 보드가 대전 상대로 등판했습니다." });
         }
@@ -597,6 +688,12 @@
             
             document.getElementById('deck-count').innerText = roomData.deck ? roomData.deck.length : 0;
             
+            if (roomData.p2_online || roomData.isAIMode) {
+                document.getElementById('ai-start-btn').style.display = 'none';
+            } else {
+                document.getElementById('ai-start-btn').style.display = 'inline-block';
+            }
+
             if (roomData.gameState === 'WAITING') {
                 statusText.innerText = "⏳ 친구를 기다리는 중입니다... 초대 링크를 복사해서 카톡으로 보내세요!";
                 tableDiv.className = "game-table waiting"; return;
@@ -687,14 +784,12 @@
                     if (index === realCards.length - 1) {
                         cardEl.id = `discard-top-${color}`;
                     }
-                    
-                    // 🚨 2. 클릭 상호작용 개편: 어떤 카드를 클릭해도 상단(가장 최근) 카드를 즉시 뽑아가도록 히트박스 전체 통합
                     if(isMyTurn && roomData.step === 'DRAW') {
                         cardEl.onclick = () => animateDiscardDraw(color);
                         cardEl.style.cursor = 'pointer';
                     } else {
                         cardEl.onclick = null;
-                        cardEl.style.cursor = (index === realCards.length - 1) ? 'default' : 'help';
+                        cardEl.style.cursor = (index === realCards.length - 1) ? 'default' : 'help'; 
                     }
                     specificContainer.appendChild(cardEl);
                 });
@@ -832,87 +927,14 @@
             roomData.turn = myRole === 'p1' ? 'p2' : 'p1'; roomData.step = 'PLAY'; roomRef.set(roomData);
         }
 
-        function runAIIntelligence() {
-            if(roomData.turn !== 'p2' || roomData.gameState !== 'PLAYING') return;
-            const aiHand = roomData.p2_hand || [];
-            if(aiHand.length === 0) return;
-            
-            if(roomData.step === 'PLAY') {
-                let aiPlaySuccess = false;
-                for(let i=0; i<aiHand.length; i++) {
-                    const card = aiHand[i];
-                    if(card.value === 0) {
-                        const targetField = roomData.p2_field[card.color].filter(c => c !== 0);
-                        if(targetField.length === 0) {
-                            roomData.p2_field[card.color].push(aiHand.splice(i, 1)[0]);
-                            roomData.step = 'DRAW'; roomData.lastDiscardedColor = 'none';
-                            aiPlaySuccess = true; break;
-                        }
-                    }
-                }
-                if(!aiPlaySuccess) {
-                    let validPlays = [];
-                    for(let i=0; i<aiHand.length; i++) {
-                        const card = aiHand[i];
-                        if(card.value > 0) {
-                            const targetField = roomData.p2_field[card.color].filter(c => c !== 0);
-                            let isLegal = true;
-                            if(targetField.length > 0) {
-                                const lastC = targetField[targetField.length - 1];
-                                if(card.value < lastC.value) isLegal = false;
-                            }
-                            if(isLegal) validPlays.push({ handIndex: i, cardObj: card });
-                        }
-                    }
-                    if(validPlays.length > 0) {
-                        validPlays.sort((a,b) => a.cardObj.value - b.cardObj.value);
-                        const bestPlay = validPlays[0];
-                        roomData.p2_field[bestPlay.cardObj.color].push(aiHand.splice(bestPlay.handIndex, 1)[0]);
-                        roomData.step = 'DRAW'; roomData.lastDiscardedColor = 'none';
-                        aiPlaySuccess = true;
-                    }
-                }
-                if(!aiPlaySuccess) {
-                    aiHand.sort((a,b) => a.value - b.value);
-                    const discardedCard = aiHand.splice(0, 1)[0];
-                    roomData.discardPiles[discardedCard.color].push(discardedCard);
-                    roomData.step = 'DRAW'; roomData.lastDiscardedColor = discardedCard.color;
-                }
-                roomRef.set(roomData);
-            } 
-            else if(roomData.step === 'DRAW') {
-                let grabbedFromDiscard = false;
-                for(let i=0; i<colors.length; i++) {
-                    const color = colors[i];
-                    const pile = roomData.discardPiles[color].filter(c => c !== 0);
-                    if(pile.length > 0) {
-                        const topCard = pile[pile.length - 1];
-                        const myField = roomData.p2_field[color].filter(c => c !== 0);
-                        if(myField.length > 0 && topCard.value >= 7 && color !== roomData.lastDiscardedColor) {
-                            const lastMyCard = myField[myField.length - 1];
-                            if(topCard.value >= lastMyCard.value) {
-                                roomData.p2_hand.push(roomData.discardPiles[color].pop());
-                                grabbedFromDiscard = true; break;
-                            }
-                        }
-                    }
-                }
-                if(!grabbedFromDiscard) { 
-                    if (roomData.deck && roomData.deck.length > 0) {
-                        roomData.p2_hand.push(roomData.deck.pop()); 
-                    }
-                }
-                if (!roomData.deck || roomData.deck.length === 0) { roomData.gameState = 'GAME_OVER'; } 
-                else { roomData.turn = 'p1'; roomData.step = 'PLAY'; }
-                roomRef.set(roomData);
-            }
-        }
-
+        // 🚨 8장 이상일 경우 20점을 더하는 로직이 완벽하게 들어있습니다.
         function calcLineScore(fieldArray) {
             const fCards = (fieldArray || []).filter(c => c !== 0); if (fCards.length === 0) return 0;
             let sum = 0; let mult = 1;
             fCards.forEach(c => { if(c.value === 0) mult++; else sum += c.value; });
-            let line = (sum - 20) * mult; if(fCards.length >= 8) line += 20; return line;
+            let line = (sum - 20) * mult; 
+            if(fCards.length >= 8) line += 20; // 🚨 8장 이상 보너스 20점!
+            return line;
         }
 
         function calcPlayerScore(role) {
