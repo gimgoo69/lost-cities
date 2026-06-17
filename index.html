@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>로스트시티 익스트림 디럭스 (얼티밋 V12)</title>
+    <title>로스트시티 익스트림 디럭스 (얼티밋 V13)</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
     <style>
@@ -55,18 +55,9 @@
         .result-title { font-size: 44px; font-weight: 900; margin-bottom: 25px; letter-spacing: -1px; text-shadow: 0 4px 15px rgba(0,0,0,0.7); }
         .result-scores { font-size: 22px; margin: 30px 0; line-height: 2; text-align: left; background: rgba(10, 15, 20, 0.6); padding: 20px 25px; border-radius: 16px; border: 1px solid rgba(255,255,255,0.07); box-shadow: inset 0 0 20px rgba(0,0,0,0.4); }
         .btn-restart { background: linear-gradient(135deg, #f1c40f 0%, #d4ac0d 100%); color: #0d1217; font-size: 20px; padding: 15px 45px; border-radius: 14px; cursor: pointer; border: 1px solid rgba(255,255,255,0.3); font-weight: 900; transition: transform 0.2s ease, background 0.2s; animation: pulseRestartBtn 2s infinite ease-in-out; } .btn-restart:hover { transform: scale(1.05); background: linear-gradient(135deg, #fce136 0%, #f1c40f 100%); }
-
-        /* 🚨 플로팅 튜토리얼 스타일 */
-        .tutorial-floating-box {
-            display: none; position: absolute; top: 70px; right: 380px; width: 340px;
-            background: rgba(15, 25, 35, 0.95); border: 2px solid #3498db; border-radius: 12px;
-            padding: 20px; color: #ecf0f1; text-align: left; box-shadow: 0 15px 40px rgba(0,0,0,0.9);
-            z-index: 99990; font-size: 14px; line-height: 1.6; pointer-events: auto;
-        }
+        .tutorial-floating-box { display: none; position: absolute; top: 70px; right: 380px; width: 340px; background: rgba(15, 25, 35, 0.95); border: 2px solid #3498db; border-radius: 12px; padding: 20px; color: #ecf0f1; text-align: left; box-shadow: 0 15px 40px rgba(0,0,0,0.9); z-index: 99990; font-size: 14px; line-height: 1.6; pointer-events: auto; }
         .tutorial-floating-box h3 { margin: 0 0 12px 0; color: #3498db; border-bottom: 1px solid rgba(255,255,255,0.2); padding-bottom: 8px; display: flex; justify-content: space-between; align-items: center; }
-        .tutorial-floating-box ol { margin: 0; padding-left: 20px; }
-        .tutorial-floating-box li { margin-bottom: 10px; }
-        .tut-close-btn { cursor: pointer; color: #e74c3c; font-size: 18px; font-weight: bold; border:none; background:none; }
+        .tutorial-floating-box ol { margin: 0; padding-left: 20px; } .tutorial-floating-box li { margin-bottom: 10px; } .tut-close-btn { cursor: pointer; color: #e74c3c; font-size: 18px; font-weight: bold; border:none; background:none; }
     </style>
 </head>
 <body id="body-layout">
@@ -74,7 +65,7 @@
 <div id="game-wrapper">
     <div id="turn-toast" class="toast-notification">🔔 당신의 턴입니다!</div>
 
-    <h1>🌐 로스트시티 익스트림 디럭스 (얼티밋 V12)</h1>
+    <h1>🌐 로스트시티 익스트림 디럭스 (얼티밋 V13)</h1>
     
     <div class="info-panel">
         <div id="player-role">접속 중...</div>
@@ -145,7 +136,7 @@
         </div>
     </div>
 
-    <!-- 🚨 플로팅 튜토리얼 패널 -->
+    <!-- 플로팅 튜토리얼 패널 -->
     <div id="tutorial-panel" class="tutorial-floating-box">
         <h3><span>📖 로스트시티 핵심 규칙</span> <button class="tut-close-btn" onclick="toggleTutorial()">✖</button></h3>
         <ol>
@@ -160,7 +151,7 @@
         </div>
     </div>
 
-    <!-- 🚨 AI 난이도 선택 모달 -->
+    <!-- AI 난이도 선택 모달 -->
     <div id="ai-select-screen" class="ai-modal-overlay">
         <div class="result-box">
             <div class="result-title" style="font-size: 32px; color: #fff;">🤖 AI 난이도 선택</div>
@@ -187,6 +178,18 @@
         </div>
     </div>
 
+    <!-- 🚨 인원 초과(관전 불가) 방어 모달 -->
+    <div id="room-full-screen" class="result-overlay">
+        <div class="result-box" style="border-color: #e74c3c;">
+            <div class="result-title" style="font-size: 32px; color: #e74c3c; text-shadow: 0 4px 15px rgba(231,76,60,0.5);">🚫 접속 불가</div>
+            <div style="font-size: 16px; margin-bottom: 25px; color: #bdc3c7;">이 방은 이미 인원이 꽉 찼거나 게임이 진행 중입니다.<br>새로운 방을 생성하여 플레이해 주세요!</div>
+            <div style="display: flex; gap: 10px; justify-content: center;">
+                <button class="btn btn-play" onclick="location.href=location.origin+location.pathname">새로운 방 만들기</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 결과 모달 -->
     <div id="result-screen" class="result-overlay">
         <div class="result-box">
             <div id="final-winner-title" class="result-title">🎉 WINNER!</div>
@@ -254,7 +257,6 @@
         let previousTurnTracker = null;
         let chatInitTime = Date.now();
 
-        // 🚨 튜토리얼 온/오프 함수
         function toggleTutorial() {
             const tut = document.getElementById('tutorial-panel');
             if(tut.style.display === 'none' || tut.style.display === '') tut.style.display = 'block';
@@ -303,23 +305,28 @@
 
         roomRef.once('value').then((snapshot) => {
             let currentData = snapshot.val();
+            
             if (currentData === null) {
                 setupNewGameInit(); 
             } else {
-                if (currentData.isAIMode) {
-                    myRole = 'p1'; 
-                    sessionStorage.setItem('lc_role_' + roomId, 'p1');
-                    roomRef.child('p1_online').set(true);
-                } else {
-                    if (!myRole) {
+                // 🚨 방 접속/권한 차단 로직 (의자 뺏기 방지)
+                if (!myRole) {
+                    // 나에게 부여된 역할(세션)이 없을 때
+                    if (currentData.gameState === 'WAITING' && !currentData.isAIMode) {
+                        // 방이 깨끗하게 비어있으면 P2 부여
                         myRole = 'p2';
                         sessionStorage.setItem('lc_role_' + roomId, 'p2');
                         roomRef.child('p2_online').set(true);
                         roomRef.child('gameState').set('TURN_SELECT');
                         chatRef.push({ sender: 'system', text: `👤 상대방(Player 2)이 접속했습니다! 방장이 선공을 선택합니다.`, timestamp: Date.now() });
                     } else {
-                        roomRef.child(myRole + '_online').set(true);
+                        // 방이 이미 진행중이거나 AI방인데 맘대로 링크 타고 들어온 경우 차단
+                        document.getElementById('room-full-screen').style.display = 'flex';
+                        return; // 🚨 코드 실행 중단
                     }
+                } else {
+                    // 기존 유저가 F5 누르고 돌아온 경우
+                    roomRef.child(myRole + '_online').set(true);
                 }
             }
 
@@ -365,7 +372,6 @@
             });
         });
 
-        // 🚨 AI 모달 열기/닫기
         function openAIModal() {
             if(!roomData) return;
             document.getElementById('ai-select-screen').style.display = 'flex';
@@ -374,12 +380,11 @@
             document.getElementById('ai-select-screen').style.display = 'none';
         }
 
-        // 🚨 AI 난이도 적용하여 시작
         function executeAIStart(difficulty) {
             document.getElementById('ai-select-screen').style.display = 'none';
             roomData.p2_online = true; 
             roomData.isAIMode = true; 
-            roomData.aiDifficulty = difficulty; // 난이도 저장
+            roomData.aiDifficulty = difficulty; 
             roomData.gameState = 'TURN_SELECT';
             roomRef.set(roomData);
             
@@ -387,7 +392,6 @@
             chatRef.push({ sender: 'system', text: `🤖 인공지능(${diffLabel}) 보드가 등판했습니다. 방장님, 선공을 선택해주세요.`, timestamp: Date.now() });
         }
 
-        // 🚨 V12 궁극의 3단계 난이도 AI 알고리즘
         function checkAndRunAI() {
             if (myRole === 'p1' && roomData && roomData.isAIMode && roomData.gameState === 'PLAYING' && roomData.turn === 'p2') {
                 setTimeout(runAIIntelligence, 800);
@@ -411,11 +415,10 @@
             let colorStats = { red:0, blue:0, green:0, yellow:0, white:0 };
             aiHand.forEach(c => colorStats[c.color] += Math.max(c.value, 5));
 
-            // 🧠 난이도별 임계값 설정
             let baseThreshold = 15;
-            if (diff === 'EASY') baseThreshold = 0; // 초급: 생각 안함 (무조건 냄)
-            else if (diff === 'HARD') baseThreshold = deckLength > 30 ? 15 : (deckLength > 15 ? 18 : 23); // 고급: 극도의 이득충
-            else baseThreshold = deckLength > 30 ? 12 : (deckLength > 15 ? 15 : 21); // 중급
+            if (diff === 'EASY') baseThreshold = 0; 
+            else if (diff === 'HARD') baseThreshold = deckLength > 30 ? 15 : (deckLength > 15 ? 18 : 23); 
+            else baseThreshold = deckLength > 30 ? 12 : (deckLength > 15 ? 15 : 21); 
 
             if (diff !== 'EASY' && myScore < oppScore - 15 && deckLength > 10) baseThreshold -= 5;
             let currentThreshold = baseThreshold + (diff === 'EASY' ? 0 : (Math.floor(Math.random() * 5) - 2));
@@ -440,7 +443,18 @@
                             }
                         } else {
                             let rushBonus = (diff !== 'EASY' && deckLength <= 12) ? 100 : 0; 
-                            validPlays.push({ handIndex: i, cardObj: card, score: 200 - card.value + rushBonus });
+                            
+                            let isHolding = false;
+                            if (diff === 'HARD' && deckLength > 15 && card.value !== 0) {
+                                let lastC = myField[myField.length - 1];
+                                if (lastC.value > 0 && card.value - lastC.value > 2) { 
+                                    isHolding = true;
+                                }
+                            }
+                            
+                            if (!isHolding) {
+                                validPlays.push({ handIndex: i, cardObj: card, score: 200 - card.value + rushBonus });
+                            }
                         }
                     }
                 }
@@ -451,7 +465,6 @@
                     roomData.p2_field[bestPlay.cardObj.color].push(aiHand.splice(bestPlay.handIndex, 1)[0]);
                     roomData.step = 'DRAW'; roomData.lastDiscardedColor = 'none';
                 } else {
-                    // 🧠 똑똑한 버리기 (난이도별 견제)
                     let discardOptions = [];
                     for(let i=0; i<aiHand.length; i++) {
                         const card = aiHand[i];
@@ -460,10 +473,10 @@
                         
                         let oppDanger = 0;
                         if (diff === 'HARD') {
-                            oppDanger = oppField.length > 0 ? 1000 : (card.value >= 8 ? 50 : 0); // 절대 안버림
+                            oppDanger = oppField.length > 0 ? 1000 : (card.value >= 8 ? 50 : 0); 
                         } else if (diff === 'NORMAL') {
                             oppDanger = oppField.length > 0 ? 100 : 0; 
-                        } // EASY는 위험도 0 고정
+                        } 
 
                         if (oppField.length > 0 && oppField[oppField.length - 1].value > card.value && card.value !== 0) {
                             oppDanger = 0; 
@@ -490,10 +503,10 @@
                         const myField = roomData.p2_field[color].filter(c => c !== 0);
                         
                         let cardValThreshold;
-                        if (diff === 'EASY') cardValThreshold = 11; // 튜토리얼은 버림판 줍지 않음
+                        if (diff === 'EASY') cardValThreshold = 11; 
                         else if (diff === 'HARD') {
                             cardValThreshold = deckLength <= 10 ? 3 : 5;
-                            if (myScore > oppScore + 10) cardValThreshold = 0; // 이기고 있으면 버림판 아무거나 주워서 스톨링
+                            if (myScore > oppScore + 10) cardValThreshold = 0; 
                         } else {
                             cardValThreshold = deckLength <= 10 ? 4 : 6;
                         }
